@@ -23,7 +23,10 @@ module.exports = {
 
   // Base config
   extends: ["eslint:recommended"],
-
+  rules: {
+    "@typescript-eslint/no-explicit-any": ["off"],
+    "jsx-a11y/no-static-element-interactions": ["off"],
+  },
   overrides: [
     // React
     {

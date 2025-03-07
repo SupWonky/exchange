@@ -1,0 +1,280 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum MediaType {
+  IMAGE
+  MOVIE
+  OTHER
+}
+
+enum Status {
+  DRAFT
+  PUBLISHED
+}
+
+enum PricingVariant {
+  BASIC
+  STANDARD
+  BUSINESS
+}
+
+enum OptionType {
+  STRING
+  BOOLEAN
+}
+
+enum OrderStatus {
+  PENDING
+  IN_PROGRESS
+  REVIEW
+  COMPLETED
+  CANCELED
+}
+
+enum TransactionType {
+  // Escrow types
+  ESCROW_HOLD     // Funds held in escrow
+  ESCROW_RELEASE  // Funds released to provider
+  ESCROW_REFUND   // Funds returned to buyer
+  ESCROW_FEE      // Platform fee deduction
+  // Non-escrow types
+  DEPOSIT
+  WITHDRAWAL
+}
+
+enum EscrowStatus {
+  HELD
+  RELEASED
+  REFUNDED
+  DISPUTED
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model Media {
+  id        String    @id @default(cuid(2))
+  name      String?
+  url       String // URL or file path to the media file
+  type      MediaType // Type of media (IMAGE, VIDEO, etc.)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  users      User[]
+  services   Service[]
+  categoires Category[]
+}
+
+model User {
+  id        String    @id @default(cuid(2))
+  email     String    @unique
+  name      String    @default("placeholder")
+  balance   Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft deletion flag
+
+  avatar   Media?  @relation(fields: [avatarId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  avatarId String?
+
+  password Password?
+  services Service[]
+  reviews  Review[]
+  transactions Transaction[]
+  escrows     EscrowAccount[]
+  messages  Message[]
+  chats Chat[]
+  buyerOrders   Order[] @relation("BuyerOrders")
+  sellerOrders  Order[] @relation("SellerOrders")
+}
+
+model Chat {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  messages  Message[]
+  participants User[]     
+  order    Order?
+}
+
+model Message {
+  id        String   @id @default(cuid(2))
+  content   String
+  createdAt DateTime     @default(now())
+  read      Boolean   @default(false)
+  isSystemMessage Boolean @default(false)
+  metadata  Json?
+
+  sender    User    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  senderId  String
+
+  chat  Chat @relation(fields: [chatId], references: [id])
+  chatId String
+}
+
+model Password {
+  hash   String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String @unique
+}
+
+model Service {
+  id            String    @id @default(cuid(2))
+  title         String
+  slug          String
+  description   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  averageRating Float     @default(0.0)
+  totalReviews  Int       @default(0)
+  status        Status    @default(DRAFT)
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  category   Category @relation(fields: [categoryId], references: [id], onUpdate: Cascade)
+  categoryId String
+
+  media       Media[]
+  reviews     Review[]
+  pricingTier PricingTier[]
+}
+
+model PricingTier {
+  id          String         @id @default(cuid(2))
+  variant     PricingVariant @default(BASIC)
+  price       Int
+  duration    Int
+  volume      String
+  description String?
+
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  serviceId String
+
+  options PricingTierOption[]
+  orders  Order[]
+
+  @@unique([variant, serviceId])
+}
+
+model PricingTierOption {
+  name         String
+  type         OptionType
+  stringValue  String?
+  booleanValue Boolean?
+
+  pricingTier   PricingTier @relation(fields: [pricingTierId], references: [id], onDelete: Cascade)
+  pricingTierId String
+
+  @@unique([name, pricingTierId])
+}
+
+model Transaction {
+  id           String           @id @default(cuid(2))
+  amount       Int              // Transaction value in smallest unit (e.g. cents)
+  type         TransactionType
+  status       TransactionStatus @default(PENDING)
+  reference    String?           // External payment reference
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  // Relationships
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  order     Order?  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String? // 💡 Removed @unique to allow multiple transactions per order
+  escrowAccount EscrowAccount? @relation(fields: [escrowAccountId], references: [id]) // 💡 New relation
+  escrowAccountId String? 
+
+  escrowFee      Int?     
+  releaseDueDate DateTime? 
+  disputeReason  String?
+}
+
+model EscrowAccount {
+  id        String   @id @default(cuid(2))
+  balance   Int      @default(0)
+  status    EscrowStatus @default(HELD) // 💡 Added state management
+  releaseDueDate DateTime? 
+  disputeDeadline DateTime? // 💡 Added dispute window
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String   @unique
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  transactions Transaction[] // 💡 Explicit relationship
+}
+
+model Order {
+  id        String      @id @default(cuid(2))
+  status    OrderStatus
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  pricingTier   PricingTier? @relation(fields: [pricingTierId], references: [id])
+  pricingTierId String?
+
+  buyerId  String
+  sellerId String
+  buyer    User  @relation("BuyerOrders", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller   User  @relation("SellerOrders", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  chat      Chat?  @relation(fields: [chatId], references: [id])
+  chatId    String?  @unique
+
+  transactions Transaction[] // 💡 Changed from single to multiple
+  escrowAccount EscrowAccount? // 💡 Changed to 1:1 relationship
+  //@@unique([buyerId, sellerId])
+}
+
+model Review {
+  id      String  @id @default(cuid(2))
+  rating  Boolean
+  comment String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Reviews are cascaded if the user or service is deleted.
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  serviceId String
+}
+
+model Category {
+  id   String @id @default(cuid(2))
+  name String
+  slug String @unique
+  path String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parentId String?
+  parent   Category? @relation("ChildrenCategories", fields: [parentId], references: [id])
+
+  image    Media?    @relation(fields: [imageId], references: [id])
+  imageId  String?   
+
+  services Service[]
+  children Category[] @relation("ChildrenCategories")
+}

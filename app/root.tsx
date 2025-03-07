@@ -1,13 +1,20 @@
+import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import {
   Links,
+  LiveReload,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "@remix-run/react";
-import type { LinksFunction } from "@remix-run/node";
 
-import "./tailwind.css";
+import "~/tailwind.css";
+import React from "react";
+import { getUser } from "./session.server";
+import { ModalRouter } from "./components/modals/modal-router";
+import { ModalRoute } from "./components/modals/modal-route";
+import { BalanceModal } from "./components/balance-modal";
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -22,19 +29,31 @@ export const links: LinksFunction = () => [
   },
 ];
 
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const user = await getUser(request);
+
+  return { user };
+};
+
 export function Layout({ children }: { children: React.ReactNode }) {
+  const { user } = useLoaderData<typeof loader>();
   return (
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="min-h-svh bg-muted dark:bg-background font-sans antialiased flex flex-col">
         {children}
         <ScrollRestoration />
         <Scripts />
+        <LiveReload />
+
+        <ModalRouter>
+          <ModalRoute path="balance" component={<BalanceModal user={user} />} />
+        </ModalRouter>
       </body>
     </html>
   );
