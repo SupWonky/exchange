@@ -65,17 +65,16 @@ const groupMessagesWithDates = (messages: Message[]) => {
   const grouped: Array<
     { type: "date"; date: Date } | { type: "message"; data: Message }
   > = [];
-  let lastDate: Date | null = null;
 
-  messages.forEach((message) => {
-    const messageDate = message.createdAt;
-    // Insert a divider if the day changes or this is the first message
-    if (!lastDate || !isSameDay(messageDate, lastDate)) {
-      grouped.push({ type: "date", date: messageDate });
-      lastDate = messageDate;
-    }
+  messages.forEach((message, index, array) => {
     grouped.push({ type: "message", data: message });
+    const nextMessgae = array.at(index + 1);
+
+    if (!nextMessgae || !isSameDay(message.createdAt, nextMessgae.createdAt)) {
+      grouped.push({ type: "date", date: message.createdAt });
+    }
   });
+
   return grouped;
 };
 
@@ -206,7 +205,7 @@ export default function ChatPage() {
           </div>
         )}
         {groupedItems.length > 0 && (
-          <div className="space-y-4">
+          <div className="flex gap-y-4 flex-col-reverse">
             {groupedItems.map((item, index) => {
               if (item.type === "date") {
                 return (

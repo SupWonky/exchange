@@ -1,22 +1,19 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
-import { getServiceListCursor } from "~/models/service.server";
+import { getServiceListItems } from "~/models/service.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const searchParams = url.searchParams;
 
   const cursor = searchParams.get("cursor");
-  const categoryId = searchParams.get("categoryId");
+  const categoryId = searchParams.get("categoryId") || undefined;
+  const query = searchParams.get("q") || undefined;
 
   if (typeof cursor !== "string" || cursor.length === 0) {
     return new Response("Invalid cursor", { status: 400 });
   }
 
-  if (typeof categoryId !== "string" || categoryId.length === 0) {
-    return new Response("Invalid categoryId", { status: 400 });
-  }
-
-  const result = await getServiceListCursor({ cursor, categoryId });
+  const result = await getServiceListItems({ cursor, categoryId, query });
 
   return result;
 };

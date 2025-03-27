@@ -22,7 +22,7 @@ module.exports = {
   ignorePatterns: ["!**/.server", "!**/.client"],
 
   // Base config
-  extends: ["eslint:recommended"],
+  extends: ["react-app"],
   rules: {
     "@typescript-eslint/no-explicit-any": ["off"],
     "jsx-a11y/no-static-element-interactions": ["off"],

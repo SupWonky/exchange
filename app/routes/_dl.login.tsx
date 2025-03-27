@@ -3,14 +3,13 @@ import type {
   LoaderFunctionArgs,
   MetaFunction,
 } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import { data, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 
 import { verifyLogin } from "~/models/user.server";
 import { createUserSession, getUserId } from "~/session.server";
 import { safeRedirect } from "~/utils";
-import { z } from "zod";
-import { getZodConstraint, parseWithZod } from "@conform-to/zod";
+import { parseWithZod } from "@conform-to/zod";
 import { useForm } from "@conform-to/react";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
@@ -23,15 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-
-const loginSchema = z.object({
-  email: z
-    .string({ message: "Введите почту" })
-    .email({ message: "Неправильный формат почты" }),
-  password: z.string({ message: "Введите пароль" }),
-  remember: z.boolean().optional(),
-  redirectTo: z.string().optional(),
-});
+import { LoginSchema } from "~/constants/schemas";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
@@ -42,14 +33,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
-  const submission = parseWithZod(formData, { schema: loginSchema });
+  const submission = parseWithZod(formData, { schema: LoginSchema });
 
   if (submission.status !== "success") {
     return submission.reply();
   }
 
   const { redirectTo, email, password, remember } = submission.value;
-  const redirectToSafe = safeRedirect(redirectTo, "/");
   const user = await verifyLogin(email, password);
 
   if (!user) {
@@ -57,6 +47,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       formErrors: ["Неправильный логин или пароль"],
     });
   }
+
+  if (!redirectTo) {
+    const cookie = await createUserSession({
+      remember: remember ?? false,
+      userId: user.id,
+      request,
+    });
+    return data(submission.reply(), {
+      headers: {
+        "Set-Cookie": cookie,
+      },
+    });
+  }
+
+  const redirectToSafe = safeRedirect(redirectTo, "/");
 
   return createUserSession({
     redirectTo: redirectToSafe,
@@ -74,7 +79,9 @@ export default function LoginPage() {
   const lastResult = useActionData<typeof action>();
   const [form, fields] = useForm({
     lastResult,
-    constraint: getZodConstraint(loginSchema),
+    onValidate({ formData }) {
+      return parseWithZod(formData, { schema: LoginSchema });
+    },
   });
 
   return (

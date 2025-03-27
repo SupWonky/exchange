@@ -14,9 +14,11 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Wallet } from "lucide-react";
+import { useModal } from "./providers/modal-provider";
 
 export function User() {
   const user = useOptionalUser();
+  const { openModal } = useModal();
 
   if (user) {
     return (
@@ -54,7 +56,7 @@ export function User() {
           </NavLink>
 
           <Link
-            to="?rmodal=balance"
+            to="?modal=balance"
             prefetch="intent"
             className=" transition-colors text-primary hover:text-indigo-500 flex items-center gap-1"
           >
@@ -94,8 +96,8 @@ export function User() {
   }
 
   return (
-    <Button asChild>
-      <Link to="/login">Войти</Link>
+    <Button type="button" onClick={() => openModal("auth/login")}>
+      Войти
     </Button>
   );
 }

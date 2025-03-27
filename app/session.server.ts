@@ -70,21 +70,50 @@ export async function createUserSession({
   redirectTo,
 }: {
   request: Request;
-  userId: string;
+  userId: User["id"];
   remember: boolean;
   redirectTo: string;
-}) {
+}): Promise<Response>;
+
+export async function createUserSession({
+  request,
+  userId,
+  remember,
+  redirectTo,
+}: {
+  request: Request;
+  userId: User["id"];
+  remember: boolean;
+  redirectTo?: string;
+}): Promise<string>;
+
+export async function createUserSession({
+  request,
+  userId,
+  remember,
+  redirectTo,
+}: {
+  request: Request;
+  userId: User["id"];
+  remember: boolean;
+  redirectTo?: string;
+}): Promise<Response | string> {
   const session = await getSession(request);
   session.set(USER_SESSION_KEY, userId);
-  return redirect(redirectTo, {
-    headers: {
-      "Set-Cookie": await sessionStorage.commitSession(session, {
-        maxAge: remember
-          ? 60 * 60 * 24 * 7 // 7 days
-          : undefined,
-      }),
-    },
+
+  const cookie = await sessionStorage.commitSession(session, {
+    maxAge: remember ? 60 * 60 * 24 * 7 : undefined,
   });
+
+  if (redirectTo) {
+    return redirect(redirectTo, {
+      headers: {
+        "Set-Cookie": cookie,
+      },
+    });
+  }
+
+  return cookie;
 }
 
 export async function logout(request: Request) {

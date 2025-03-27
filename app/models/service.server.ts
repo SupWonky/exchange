@@ -3,14 +3,6 @@ import { Category, Media, Service, User } from "@prisma/client";
 import { prisma } from "~/db.server";
 import { formatSlug } from "~/lib/utils";
 
-export async function getServiceListItems() {
-  return prisma.service.findMany({
-    select: { id: true, title: true, media: true, user: true },
-    orderBy: { createdAt: "desc" },
-    take: 4,
-  });
-}
-
 export async function getServiceListByUser({
   userId,
   status,
@@ -27,24 +19,37 @@ export async function getServiceListByUser({
   });
 }
 
-export async function getServiceListCursor({
+export async function getServiceListItems({
   cursor,
   categoryId,
+  query,
 }: {
-  cursor: string;
-  categoryId: Category["id"];
+  cursor?: string;
+  categoryId?: Category["id"];
+  query?: string;
 }) {
+  const filters = {
+    ...(categoryId
+      ? { category: { path: { startsWith: `%${categoryId}` } } }
+      : {}),
+    ...(query
+      ? {
+          OR: [
+            { title: { contains: query } },
+            { description: { contains: query } },
+          ],
+        }
+      : {}),
+  };
+
   return prisma.service.findMany({
     include: { media: true, user: true, pricingTier: true },
-    where: { category: { path: { startsWith: `%${categoryId}` } } },
-    cursor: {
-      id: cursor,
-    },
-    skip: 1,
+    where: filters,
     take: 6,
     orderBy: {
       id: "asc",
     },
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
 }
 
@@ -69,6 +74,46 @@ export async function createService({
       media: {
         create: media,
       },
+    },
+  });
+}
+
+export async function updateService({
+  id,
+  title,
+  userId,
+  categoryId,
+  media,
+  description,
+}: Pick<Service, "id" | "title" | "userId" | "categoryId" | "description"> & {
+  media?: { url: Media["url"]; type: Media["type"]; name?: Media["name"] }[];
+}) {
+  const slug = formatSlug(title);
+
+  await prisma.service.update({
+    data: {
+      media: {
+        deleteMany: {},
+      },
+    },
+    where: {
+      id,
+    },
+  });
+
+  return prisma.service.update({
+    data: {
+      slug,
+      title,
+      userId,
+      categoryId,
+      description,
+      media: {
+        create: media,
+      },
+    },
+    where: {
+      id,
     },
   });
 }

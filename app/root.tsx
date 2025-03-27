@@ -10,11 +10,13 @@ import {
 } from "@remix-run/react";
 
 import "~/tailwind.css";
-import React from "react";
 import { getUser } from "./session.server";
-import { ModalRouter } from "./components/modals/modal-router";
-import { ModalRoute } from "./components/modals/modal-route";
-import { BalanceModal } from "./components/balance-modal";
+import { ModalRouter } from "./components/modals/router";
+import { ModalRoute } from "./components/modals/route";
+import { BalanceModal } from "./components/modals/balance";
+import { LoginDialog } from "./components/modals/login";
+import { JoinDialog } from "./components/modals/join";
+import { ModalProvider } from "./components/providers/modal-provider";
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -35,8 +37,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return { user };
 };
 
-export function Layout({ children }: { children: React.ReactNode }) {
-  const { user } = useLoaderData<typeof loader>();
+export function App() {
   return (
     <html lang="en">
       <head>
@@ -46,19 +47,37 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body className="min-h-svh bg-muted dark:bg-background font-sans antialiased flex flex-col">
-        {children}
+        <Outlet />
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
-
-        <ModalRouter>
-          <ModalRoute path="balance" component={<BalanceModal user={user} />} />
-        </ModalRouter>
       </body>
     </html>
   );
 }
 
-export default function App() {
-  return <Outlet />;
+export default function AppWithProviders() {
+  const { user } = useLoaderData<typeof loader>();
+  return (
+    <ModalProvider>
+      <App />
+
+      <ModalRouter>
+        {user && (
+          <ModalRoute path="balance" component={<BalanceModal user={user} />} />
+        )}
+
+        <ModalRoute
+          path="auth/login"
+          component={<LoginDialog />}
+          conditional={!user}
+        />
+        <ModalRoute
+          path="auth/join"
+          component={<JoinDialog />}
+          conditional={!user}
+        />
+      </ModalRouter>
+    </ModalProvider>
+  );
 }

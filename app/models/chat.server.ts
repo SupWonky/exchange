@@ -21,8 +21,8 @@ export async function getChatMessages({
   page: number;
   limit?: number;
 }) {
-  const messages = await prisma.chat
-    .findUnique({
+  return prisma.chat
+    .findUniqueOrThrow({
       where: {
         id: chatId,
       },
@@ -34,7 +34,6 @@ export async function getChatMessages({
       skip: (page - 1) * limit,
       take: limit,
     });
-  return messages?.reverse();
 }
 
 export async function createChat({

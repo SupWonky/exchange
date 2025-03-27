@@ -1,5 +1,9 @@
 node_modules
+package-lock.json
 
 /.cache
 /build
 .env
+
+prisma/data.db
+prisma/migrations

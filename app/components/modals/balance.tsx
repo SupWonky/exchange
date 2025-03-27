@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useFetcher } from "@remix-run/react";
-import { PlusCircle, History, CreditCard, AlertCircle } from "lucide-react";
+import { PlusCircle, History, AlertCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "./ui/dialog";
+} from "../ui/dialog";
 import {
   Card,
   CardContent,
@@ -15,27 +15,26 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "./ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+} from "../ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { User } from "@prisma/client";
 import { SubmissionResult, useForm } from "@conform-to/react";
-import { getZodConstraint, parseWithZod } from "@conform-to/zod";
-import { popupSchema } from "~/constants/schemas";
+import { parseWithZod } from "@conform-to/zod";
+import { PopupSchema } from "~/constants/schemas";
 
 export function BalanceModal({ user }: { user: User }) {
   const fetcher = useFetcher();
   const [form, fields] = useForm({
     lastResult: fetcher.data as SubmissionResult<string[]> | undefined,
-    constraint: getZodConstraint(popupSchema),
     defaultValue: {
       amount: 0,
     },
     onValidate({ formData }) {
-      return parseWithZod(formData, { schema: popupSchema });
+      return parseWithZod(formData, { schema: PopupSchema });
     },
     onSubmit() {
       setOpen(false);

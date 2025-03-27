@@ -9,15 +9,20 @@ import { getServiceItemsByCategory } from "~/models/service.server";
 
 type ServiceType = Awaited<ReturnType<typeof getServiceItemsByCategory>>[0];
 
+type ServiceListProps = (
+  | { categoryId: string; query?: never }
+  | { categoryId?: never; query: string }
+) & {
+  limit?: number;
+  initServices: ServiceType[];
+};
+
 export function ServiceList({
   initServices,
   categoryId,
+  query,
   limit = 6,
-}: {
-  initServices: ServiceType[];
-  categoryId: string;
-  limit?: number;
-}) {
+}: ServiceListProps) {
   const [services, setServices] = React.useState(initServices);
   const [cursor, setCursor] = React.useState<string | null>(
     initServices.length === limit
@@ -55,7 +60,19 @@ export function ServiceList({
 
   function loadMore() {
     if (!cursor || fetcher.state === "loading") return;
-    fetcher.load(`/feed?cursor=${cursor}&categoryId=${categoryId}`);
+    const params = new URLSearchParams();
+
+    if (categoryId) {
+      params.set("categoryId", categoryId);
+    }
+
+    if (query) {
+      params.set("q", query);
+    }
+
+    params.set("cursor", cursor);
+
+    fetcher.load(`/feed${params.toString()}`);
   }
 
   return (

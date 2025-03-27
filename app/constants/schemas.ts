@@ -60,11 +60,45 @@ const messageSchema = z.object({
   chatId: z.string({ message: "Ошибка, не указан чат" }),
 });
 
-const popupSchema = z.object({
+const messageOrderSchema = z.object({
+  content: z.string({ message: "Введите сообщение" }),
+  senderId: z.string({ message: "Ошибка, не указан отправитель" }),
+  orderId: z.string({ message: "Ошибка, не указан заказ" }),
+  chatId: z.string({ message: "Ошибка, не указан чат" }),
+});
+
+const PopupSchema = z.object({
   amount: z
     .number({ message: "Введите сумму пополнения" })
     .int({ message: "Введите целое число" })
     .positive({ message: "Число должно быть положительным" }),
 });
 
-export { pricingSchema, option, serviceSchema, messageSchema, popupSchema };
+const LoginSchema = z.object({
+  email: z
+    .string({ message: "Введите почту" })
+    .email({ message: "Неправильный формат почты" }),
+  password: z.string({ message: "Введите пароль" }),
+  remember: z.boolean().optional(),
+  redirectTo: z.string().optional(),
+});
+
+const JoinSchema = z.object({
+  email: z
+    .string({ message: "Введите почту" })
+    .email({ message: "Неправильный формат почты" }),
+  password: z.string({ message: "Введите пароль" }),
+  username: z.string({ message: "Введите имя пользователя" }),
+  redirectTo: z.string().optional(),
+});
+
+export {
+  pricingSchema,
+  option,
+  serviceSchema,
+  messageSchema,
+  messageOrderSchema,
+  PopupSchema,
+  LoginSchema,
+  JoinSchema,
+};

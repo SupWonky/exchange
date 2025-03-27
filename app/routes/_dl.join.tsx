@@ -9,8 +9,7 @@ import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 import { createUser, getUserByEmail } from "~/models/user.server";
 import { createUserSession, getUserId } from "~/session.server";
 import { safeRedirect } from "~/utils";
-import { z } from "zod";
-import { getZodConstraint, parseWithZod } from "@conform-to/zod";
+import { parseWithZod } from "@conform-to/zod";
 import { useForm } from "@conform-to/react";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
@@ -22,15 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-
-const joinSchema = z.object({
-  email: z
-    .string({ message: "Введите почту" })
-    .email({ message: "Неправильный формат почты" }),
-  password: z.string({ message: "Введите пароль" }),
-  username: z.string({ message: "Введите имя пользователя" }),
-  redirectTo: z.string().optional(),
-});
+import { JoinSchema } from "~/constants/schemas";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
@@ -40,7 +31,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
-  const submission = parseWithZod(formData, { schema: joinSchema });
+  const submission = parseWithZod(formData, { schema: JoinSchema });
 
   if (submission.status !== "success") {
     return submission.reply();
@@ -74,7 +65,10 @@ export default function Join() {
   const lastResult = useActionData<typeof action>();
   const [form, fields] = useForm({
     lastResult,
-    constraint: getZodConstraint(joinSchema),
+    onValidate({ formData }) {
+      return parseWithZod(formData, { schema: JoinSchema });
+    },
+    shouldRevalidate: "onInput",
   });
 
   return (
