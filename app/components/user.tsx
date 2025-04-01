@@ -1,13 +1,12 @@
-import { Form, Link, NavLink } from "@remix-run/react";
+import { Form, NavLink, useFetcher } from "@remix-run/react";
 
-import { useOptionalUser } from "~/utils";
+import { useOptionalPrefs, useOptionalUser } from "~/utils";
 
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -18,7 +17,21 @@ import { useModal } from "./providers/modal-provider";
 
 export function User() {
   const user = useOptionalUser();
-  const { openModal } = useModal();
+  const prefs = useOptionalPrefs();
+  const { setModal } = useModal();
+
+  const role = prefs?.role || "buyer";
+  const fecther = useFetcher();
+
+  const updateRole = (role: "buyer" | "seller") => {
+    const fromData = new FormData();
+    fromData.set("role", role);
+    fecther.submit(fromData, {
+      method: "post",
+      action: "/set-prefs",
+      preventScrollReset: true,
+    });
+  };
 
   if (user) {
     return (
@@ -55,24 +68,23 @@ export function User() {
             Чат
           </NavLink>
 
-          <Link
-            to="?modal=balance"
-            prefetch="intent"
+          <button
+            onClick={() => setModal("balance")}
             className=" transition-colors text-primary hover:text-indigo-500 flex items-center gap-1"
           >
             <Wallet className="h-4 w-4" />
             <span className="font-medium">{user.balance} ₽</span>
-          </Link>
+          </button>
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              className="rounded-full focus:outline-none focus:ring-0 focus:ring-offset-0"
+              className="rounded-full focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               type="button"
             >
-              <Avatar className="h-9 w-9">
-                <AvatarFallback>
+              <Avatar className="h-9 w-9 border-2 border-indigo-100">
+                <AvatarFallback className="bg-indigo-50 text-indigo-700">
                   {user.email.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -81,14 +93,39 @@ export function User() {
           <DropdownMenuContent className="w-56" align="end">
             <DropdownMenuLabel>Мой аккаунт</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>Профиль</DropdownMenuItem>
-              <DropdownMenuItem>Настройки</DropdownMenuItem>
-            </DropdownMenuGroup>
+            <div className="flex rounded-md overflow-hidden border">
+              <button
+                name="role"
+                value="buyer"
+                className={`flex items-center justify-center gap-1.5 flex-1 text-sm py-1.5 ${
+                  role === "buyer"
+                    ? "bg-indigo-500 text-white"
+                    : "bg-gray-50 hover:bg-gray-100"
+                }`}
+                disabled={role === "buyer"}
+                onClick={() => updateRole("buyer")}
+              >
+                Я покупатель
+              </button>
+              <button
+                name="role"
+                value="seller"
+                className={`flex items-center justify-center gap-1.5 flex-1 text-sm py-1.5 ${
+                  role === "seller"
+                    ? "bg-indigo-500 text-white"
+                    : "bg-gray-50 hover:bg-gray-100"
+                }`}
+                disabled={role === "seller"}
+                onClick={() => updateRole("seller")}
+              >
+                Я продавец
+              </button>
+            </div>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <LogoutDropdownMenuButton />
-            </DropdownMenuGroup>
+            <DropdownMenuItem>Профиль</DropdownMenuItem>
+            <DropdownMenuItem>Настройки</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <LogoutDropdownMenuButton />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -96,7 +133,7 @@ export function User() {
   }
 
   return (
-    <Button type="button" onClick={() => openModal("auth/login")}>
+    <Button type="button" onClick={() => setModal("auth/login")}>
       Войти
     </Button>
   );

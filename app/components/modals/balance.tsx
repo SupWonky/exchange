@@ -100,16 +100,15 @@ export function BalanceModal({ user }: { user: User }) {
   ];
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Баланс</DialogTitle>
-          <DialogDescription>
-            Управление балансом вашего аккаунта
-          </DialogDescription>
-        </DialogHeader>
+    <div className="grid items-start justify-center grid-cols-[minmax(0,320px)] grid-rows-[auto,auto,1fr] min-h-96">
+      <DialogHeader className="mb-8 items-center">
+        <DialogTitle className="mt-8 text-2xl font-medium">Баланс</DialogTitle>
+        <DialogDescription>
+          Управление балансом вашего аккаунта
+        </DialogDescription>
+      </DialogHeader>
 
-        {/* {successMessage && (
+      {/* {successMessage && (
           <Alert className="border-green-200 bg-green-50 mb-4">
             <Check className="h-4 w-4 text-green-600" />
             <AlertTitle className="text-green-800">Успешно</AlertTitle>
@@ -119,145 +118,140 @@ export function BalanceModal({ user }: { user: User }) {
           </Alert>
         )} */}
 
-        {!isTopUpMode ? (
-          <Tabs defaultValue="balance" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="balance">Текущий баланс</TabsTrigger>
-              <TabsTrigger value="history">История операций</TabsTrigger>
-            </TabsList>
+      {!isTopUpMode ? (
+        <Tabs defaultValue="balance" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="balance">Текущий баланс</TabsTrigger>
+            <TabsTrigger value="history">История операций</TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="balance" className="mt-4">
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-2xl">{user.balance} ₽</CardTitle>
-                  <CardDescription>
-                    Доступные средства на вашем счете
-                  </CardDescription>
-                </CardHeader>
-
-                <CardContent className="space-y-4">
-                  <Button
-                    className="w-full flex items-center gap-2"
-                    onClick={handleTopUp}
-                  >
-                    <PlusCircle className="h-4 w-4" />
-                    Пополнить баланс
-                  </Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="history" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>История операций</CardTitle>
-                  <CardDescription>
-                    Последние транзакции по вашему счету
-                  </CardDescription>
-                </CardHeader>
-
-                <CardContent className="space-y-2">
-                  {transactions.length > 0 ? (
-                    transactions.map((transaction) => (
-                      <div
-                        key={transaction.id}
-                        className="flex justify-between py-2 border-b last:border-0"
-                      >
-                        <div>
-                          <p className="font-medium">
-                            {transaction.description}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {transaction.date}
-                          </p>
-                        </div>
-                        <p
-                          className={
-                            transaction.amount > 0
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }
-                        >
-                          {transaction.amount > 0
-                            ? `+${transaction.amount}`
-                            : transaction.amount}{" "}
-                          ₽
-                        </p>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="py-4 text-center text-gray-500">
-                      Нет истории операций
-                    </div>
-                  )}
-                </CardContent>
-
-                <CardFooter>
-                  <Button variant="outline" className="w-full mt-2">
-                    <History className="h-4 w-4 mr-2" />
-                    Показать все операции
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        ) : (
-          <fetcher.Form
-            method="post"
-            action="/balance"
-            id={form.id}
-            onSubmit={form.onSubmit}
-          >
+          <TabsContent value="balance" className="mt-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Пополнение баланса</CardTitle>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-2xl">{user.balance} ₽</CardTitle>
                 <CardDescription>
-                  Введите сумму для пополнения баланса
+                  Доступные средства на вашем счете
                 </CardDescription>
               </CardHeader>
 
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor={fields.amount.name}>
-                    Сумма пополнения (₽)
-                  </Label>
-                  <Input
-                    id={fields.amount.name}
-                    name={fields.amount.name}
-                    type="number"
-                    defaultValue={fields.amount.initialValue}
-                  />
-                  <p className="text-sm text-gray-500">
-                    Минимальная сумма пополнения: 100 ₽
-                  </p>
-                </div>
+                <Button
+                  className="w-full flex items-center gap-2"
+                  onClick={handleTopUp}
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  Пополнить баланс
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                {fields.amount.errors && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Ошибка</AlertTitle>
-                    <AlertDescription>{fields.amount.errors}</AlertDescription>
-                  </Alert>
+          <TabsContent value="history" className="mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>История операций</CardTitle>
+                <CardDescription>
+                  Последние транзакции по вашему счету
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="space-y-2">
+                {transactions.length > 0 ? (
+                  transactions.map((transaction) => (
+                    <div
+                      key={transaction.id}
+                      className="flex justify-between py-2 border-b last:border-0"
+                    >
+                      <div>
+                        <p className="font-medium">{transaction.description}</p>
+                        <p className="text-sm text-gray-500">
+                          {transaction.date}
+                        </p>
+                      </div>
+                      <p
+                        className={
+                          transaction.amount > 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }
+                      >
+                        {transaction.amount > 0
+                          ? `+${transaction.amount}`
+                          : transaction.amount}{" "}
+                        ₽
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-4 text-center text-gray-500">
+                    Нет истории операций
+                  </div>
                 )}
               </CardContent>
 
-              <CardFooter className="flex justify-between flex-col sm:flex-row gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCancelTopUp}
-                  disabled={isSubmitting}
-                >
-                  Отмена
-                </Button>
-                <Button type="submit">
-                  {isSubmitting ? "Обработка..." : "Пополнить"}
+              <CardFooter>
+                <Button variant="outline" className="w-full mt-2">
+                  <History className="h-4 w-4 mr-2" />
+                  Показать все операции
                 </Button>
               </CardFooter>
             </Card>
-          </fetcher.Form>
-        )}
-      </DialogContent>
-    </Dialog>
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <fetcher.Form
+          method="post"
+          action="/balance"
+          id={form.id}
+          onSubmit={form.onSubmit}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>Пополнение баланса</CardTitle>
+              <CardDescription>
+                Введите сумму для пополнения баланса
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor={fields.amount.name}>Сумма пополнения (₽)</Label>
+                <Input
+                  id={fields.amount.name}
+                  name={fields.amount.name}
+                  type="number"
+                  defaultValue={fields.amount.initialValue}
+                />
+                <p className="text-sm text-gray-500">
+                  Минимальная сумма пополнения: 100 ₽
+                </p>
+              </div>
+
+              {fields.amount.errors && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Ошибка</AlertTitle>
+                  <AlertDescription>{fields.amount.errors}</AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+
+            <CardFooter className="flex justify-between flex-col sm:flex-row gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancelTopUp}
+                disabled={isSubmitting}
+              >
+                Отмена
+              </Button>
+              <Button type="submit">
+                {isSubmitting ? "Обработка..." : "Пополнить"}
+              </Button>
+            </CardFooter>
+          </Card>
+        </fetcher.Form>
+      )}
+    </div>
   );
 }

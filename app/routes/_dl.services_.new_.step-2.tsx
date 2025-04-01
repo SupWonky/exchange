@@ -21,12 +21,12 @@ import {
 } from "~/components/ui/card";
 import { useState } from "react";
 import { Switch } from "~/components/ui/switch";
-import { pricingSchema } from "~/constants/schemas";
+import { PricingSchema } from "~/constants/schemas";
 import { PricingForm } from "~/components/pricing-form";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
-  const submission = parseWithZod(formData, { schema: pricingSchema });
+  const submission = parseWithZod(formData, { schema: PricingSchema });
 
   if (submission.status !== "success") {
     return submission.reply();

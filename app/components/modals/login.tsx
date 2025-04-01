@@ -1,12 +1,6 @@
-import { Link, useFetcher, useSearchParams } from "@remix-run/react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
-import { useEffect, useState } from "react";
+import { useFetcher } from "@remix-run/react";
+import { DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
+import { useEffect } from "react";
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { Field, FieldError } from "../field";
@@ -19,25 +13,23 @@ import * as Route from "~/routes/_dl.login";
 import { useModal } from "../providers/modal-provider";
 
 export function LoginDialog() {
-  const { setOpen, openModal } = useModal();
+  const { setModal, closeModal } = useModal();
   const fecther = useFetcher<typeof Route.action>();
   const [form, fields] = useForm({
     lastResult: fecther.data,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: LoginSchema });
     },
-    shouldRevalidate: "onInput",
   });
 
-  console.log(fecther.data);
+  const isSubmitting = fecther.state === "submitting";
 
   useEffect(() => {
     if (fecther.data) {
       const result = fecther.data;
-      console.log(result);
+
       if (result.status === "success") {
-        console.log("closing");
-        setOpen(false);
+        closeModal();
       }
     }
   }, [fecther.data]);
@@ -47,7 +39,7 @@ export function LoginDialog() {
       <DialogHeader className="mb-8 items-center">
         <DialogTitle className="mt-8 text-2xl font-medium">Вход</DialogTitle>
         {form.errors && (
-          <DialogDescription className=" text-destructive">
+          <DialogDescription className="text-destructive">
             {form.errors}
           </DialogDescription>
         )}
@@ -77,25 +69,25 @@ export function LoginDialog() {
           )}
         </Field>
 
-        <Button className="w-full">Войти</Button>
+        <Button className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? "Загрузка..." : "Войти"}
+        </Button>
 
         <div className="flex justify-between items-center">
-          <Field>
-            <div className="flex flex-row gap-2">
-              <CheckboxConform meta={fields.remember} />
+          <div className="flex flex-row items-center gap-2">
+            <CheckboxConform meta={fields.remember} />
 
-              <Label
-                htmlFor={fields.remember.id}
-                className="block text-sm text-gray-900"
-              >
-                Запомнить
-              </Label>
+            <Label
+              htmlFor={fields.remember.id}
+              className="block text-sm text-gray-900"
+            >
+              Запомнить
+            </Label>
 
-              {fields.remember.errors && (
-                <FieldError>{fields.remember.errors}</FieldError>
-              )}
-            </div>
-          </Field>
+            {fields.remember.errors && (
+              <FieldError>{fields.remember.errors}</FieldError>
+            )}
+          </div>
 
           <div className="text-center text-sm text-gray-500">
             Нету аккаунта?{" "}
@@ -103,7 +95,7 @@ export function LoginDialog() {
               type="button"
               variant="link"
               className="px-0"
-              onClick={() => openModal("auth/join")}
+              onClick={() => setModal("auth/join")}
             >
               Регистрация
             </Button>

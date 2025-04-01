@@ -29,7 +29,7 @@ export default function ManageServicesAllPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col gap-8 mb-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Мои услуги</h1>
+          <h1 className="text-3xl font-semibold text-gray-900">Мои услуги</h1>
           <p className="mt-1 text-gray-500">
             Управляйте вашими услугами и черновиками
           </p>
@@ -82,7 +82,7 @@ export default function ManageServicesAllPage() {
               <ImageIcon className="h-6 w-6 text-primary" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Нет черновиков
+              Нет опбуликованных
             </h3>
             <p className="text-gray-500 text-center mb-6">
               Создайте свою первую услугу, чтобы начать привлекать клиентов

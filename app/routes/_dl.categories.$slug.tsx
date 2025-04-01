@@ -1,19 +1,16 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
-import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
+import { Link, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 import { CategoryBreadcrumbs } from "~/components/category-breadcrumbs";
-import { SearchCheckbox } from "~/components/search-checkbox";
+import { ConfigurableFilter, FilterSectionType } from "~/components/filters";
 import { ServiceList } from "~/components/service-list";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-
 import {
   getCategoryTree,
   getCategoryWithChildren,
 } from "~/models/category.server";
 import { getServiceItemsByCategory } from "~/models/service.server";
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ params, request }: LoaderFunctionArgs) {
   invariant(params.slug, "Slug not found");
 
   const category = await getCategoryWithChildren({
@@ -28,7 +25,8 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
   let services = undefined;
   if (category.parent) {
-    services = await getServiceItemsByCategory({
+    const searchParams = new URL(request.url).searchParams;
+    searchParams.services = await getServiceItemsByCategory({
       categoryId: category.id,
     });
   }
@@ -84,16 +82,58 @@ export default function CategoryPage() {
       </div>
     );
   }
+
+  const filterConfig: FilterSectionType[] = [
+    {
+      id: "category",
+      title: "Категория",
+      type: "checkbox",
+      paramName: "category",
+      options: [
+        { value: "electronics", label: "Электроника" },
+        { value: "clothing", label: "Одежда" },
+        { value: "home", label: "Для дома" },
+      ],
+    },
+    {
+      id: "price",
+      title: "Цена",
+      type: "radio",
+      paramName: "price",
+      options: [
+        { value: "_500", label: "500 руб." },
+        { value: "1000_4500", label: "1000 - 4500 руб." },
+        { value: "5000_43000", label: "5000 - 43000 руб." },
+        { value: "45000_", label: "45000 руб. и выше" },
+      ],
+    },
+    {
+      id: "customPrice",
+      title: "Своя цена",
+      type: "range",
+      paramName: "price",
+      minPlaceholder: "От руб.",
+      maxPlaceholder: "До руб.",
+    },
+  ];
   // Otherwise, the category is a sub-category so render its services.
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex flex-row justify-between items-center mb-6">
-        <h1 className="text-3xl font-semibold">{category.name}</h1>
-        <CategoryBreadcrumbs categoryTree={categoryTree} />
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-semibold">
+          {category.name}
+        </h1>
+        <CategoryBreadcrumbs
+          className="hidden lg:block"
+          categoryTree={categoryTree}
+        />
       </div>
 
-      <div className="flex flex-row gap-6 items-start">
-        <Filters />
+      <div className="grid lg:grid-cols-[280px_1fr] gap-6">
+        <ConfigurableFilter
+          className="self-start"
+          filterSections={filterConfig}
+        />
         {services && services.length > 0 ? (
           <ServiceList categoryId={category.id} initServices={services} />
         ) : (
@@ -101,73 +141,5 @@ export default function CategoryPage() {
         )}
       </div>
     </div>
-  );
-}
-
-export function Filters() {
-  const [searchParams] = useSearchParams();
-  return (
-    <aside className="w-64 shrink-0 bg-card shadow rounded-lg border p-4">
-      <div className="space-y-4 text-base">
-        {/* Preset Price Filters */}
-        <div>
-          <h3 className="font-semibold mb-1">Цена</h3>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <SearchCheckbox name="price" value="_500" />
-              <label htmlFor="price">
-                <Link to="?price=_500">500 руб.</Link>
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <SearchCheckbox name="price" value="1000_4500" />
-              <label htmlFor="price">
-                <Link to="?price=1000_4500">1000 - 4500 руб.</Link>
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <SearchCheckbox name="price" value="5000_43000" />
-              <label htmlFor="price">
-                <Link to="?price=5000_43000">5000 - 43000 руб.</Link>
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <SearchCheckbox name="price" value="45000_" />
-              <label htmlFor="price">
-                <Link to="?price=45000_">45000 руб. и выше</Link>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        {/* Custom Price Filter */}
-        <div>
-          <h3 className="font-semibold mb-1">Своя цена</h3>
-          <form method="get" className="flex flex-col space-y-2">
-            <div className="flex flex-row gap-2">
-              <Input
-                type="number"
-                name="minPrice"
-                id="minPrice"
-                placeholder="От руб."
-                className="appearance-none [-moz-appearance:textfield]"
-                defaultValue={searchParams.get("minPrice") || ""}
-              />
-              <Input
-                type="number"
-                name="maxPrice"
-                id="maxPrice"
-                placeholder="До руб."
-                className="appearance-none [-moz-appearance:textfield]"
-                defaultValue={searchParams.get("maxPrice") || ""}
-              />
-            </div>
-            <Button type="submit" variant="outline">
-              Применить
-            </Button>
-          </form>
-        </div>
-      </div>
-    </aside>
   );
 }

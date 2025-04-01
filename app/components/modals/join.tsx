@@ -1,16 +1,9 @@
-import { Link, useFetcher, useSearchParams } from "@remix-run/react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
-import { useEffect, useState } from "react";
+import { useFetcher } from "@remix-run/react";
+import { DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
+import { useEffect } from "react";
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { Field, FieldError } from "../field";
-import { Label } from "../ui/label";
 import { InputConform } from "../conform/input";
 import { Button } from "../ui/button";
 import { JoinSchema } from "~/constants/schemas";
@@ -18,22 +11,23 @@ import * as Route from "~/routes/_dl.join";
 import { useModal } from "../providers/modal-provider";
 
 export function JoinDialog() {
-  const { setOpen, openModal } = useModal();
+  const { closeModal } = useModal();
   const fecther = useFetcher<typeof Route.action>();
   const [form, fields] = useForm({
     lastResult: fecther.data,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: JoinSchema });
     },
-    shouldRevalidate: "onInput",
   });
+
+  const isSubmitting = fecther.state === "submitting";
 
   useEffect(() => {
     if (fecther.data) {
       const result = fecther.data;
 
       if (result.status === "success") {
-        setOpen(false);
+        closeModal();
       }
     }
   }, [fecther.data]);
@@ -86,21 +80,11 @@ export function JoinDialog() {
           )}
         </Field>
 
-        <Button className="w-full">Создать аккаунт</Button>
+        <Button className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? "Загрузка..." : "Создать аккаунт"}
+        </Button>
 
-        <div className="flex justify-center items-center">
-          <div className="text-center text-sm text-gray-500">
-            Уже есть аккаунт?{" "}
-            <Button
-              type="button"
-              variant="link"
-              className="px-0"
-              onClick={() => openModal("auth/login")}
-            >
-              Войти
-            </Button>
-          </div>
-        </div>
+        <div className="flex justify-center items-center"></div>
       </fecther.Form>
     </div>
   );

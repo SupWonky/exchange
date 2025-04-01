@@ -1,12 +1,12 @@
 import { z } from "zod";
 
-const option = z.object({
+const OptionSchema = z.object({
   name: z.string({ message: "Введите имя" }),
   type: z.enum(["STRING", "BOOLEAN"]),
   value: z.union([z.string(), z.boolean()]),
 });
 
-const pricingSchema = z.object({
+const PricingSchema = z.object({
   mode: z.enum(["single", "multiple"]),
   pricingVariants: z.array(
     z.object({
@@ -25,7 +25,7 @@ const pricingSchema = z.object({
         .string({ message: "Введите описание" })
         .max(150)
         .optional(),
-      options: z.array(option).optional(),
+      options: z.array(OptionSchema).optional(),
     })
   ),
 });
@@ -92,9 +92,14 @@ const JoinSchema = z.object({
   redirectTo: z.string().optional(),
 });
 
+const UserPrefs = z.object({
+  role: z.enum(["buyer", "seller"]),
+});
+
 export {
-  pricingSchema,
-  option,
+  PricingSchema,
+  OptionSchema,
+  UserPrefs,
   serviceSchema,
   messageSchema,
   messageOrderSchema,

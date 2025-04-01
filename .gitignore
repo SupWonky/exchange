@@ -5,5 +5,5 @@ package-lock.json
 /build
 .env
 
-prisma/data.db
-prisma/migrations
+/prisma/data.db
+/prisma/migrations

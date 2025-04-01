@@ -72,7 +72,7 @@ export function ServiceList({
 
     params.set("cursor", cursor);
 
-    fetcher.load(`/feed${params.toString()}`);
+    fetcher.load(`/feed?${params.toString()}`);
   }
 
   return (

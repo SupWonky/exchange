@@ -3,6 +3,7 @@ import { useMatches } from "@remix-run/react";
 import { useMemo } from "react";
 
 import type { User } from "~/models/user.server";
+import { UserPrefs } from "./lib/user.server";
 
 const DEFAULT_REDIRECT = "/";
 
@@ -54,12 +55,24 @@ function isUser(user: unknown): user is User {
   );
 }
 
+function isUserPrefs(prefs: unknown): prefs is UserPrefs {
+  return prefs != null && typeof prefs === "object" && "role" in prefs;
+}
+
 export function useOptionalUser(): User | undefined {
   const data = useMatchesData("root");
   if (!data || !isUser(data.user)) {
     return undefined;
   }
   return data.user;
+}
+
+export function useOptionalPrefs(): UserPrefs | undefined {
+  const data = useMatchesData("root");
+  if (!data || !isUserPrefs(data.prefs)) {
+    return undefined;
+  }
+  return data.prefs;
 }
 
 export function useUser(): User {

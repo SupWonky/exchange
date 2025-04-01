@@ -1,9 +1,9 @@
 import { SubmissionResult, useForm } from "@conform-to/react";
-import { getZodConstraint } from "@conform-to/zod";
+import { parseWithZod } from "@conform-to/zod";
 import { PricingTier, PricingVariant } from "@prisma/client";
 import { Form } from "@remix-run/react";
 import { useEffect, useState } from "react";
-import { pricingSchema } from "~/constants/schemas";
+import { PricingSchema } from "~/constants/schemas";
 import { getPricingVariantLabel } from "~/utils";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -27,6 +27,7 @@ import {
 import { Plus, Trash2 } from "lucide-react";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -35,6 +36,8 @@ import {
 } from "./ui/dialog";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Checkbox } from "./ui/checkbox";
+import { Cross1Icon } from "@radix-ui/react-icons";
+import { Field } from "./field";
 
 type PricingFormProps = {
   mode: "single" | "multiple";
@@ -72,12 +75,14 @@ export function PricingForm({
 
   const [form, fields] = useForm({
     lastResult,
-    constraint: getZodConstraint(pricingSchema),
-    shouldValidate: "onBlur",
+    onValidate({ formData }) {
+      return parseWithZod(formData, { schema: PricingSchema });
+    },
     defaultValue: {
       mode,
       pricingVariants: pricingVariants,
     },
+    shouldRevalidate: "onInput",
   });
 
   const pricingList = fields.pricingVariants.getFieldList();
@@ -344,57 +349,65 @@ function OptionDialog({ onAdd }: OptionDialogProps) {
           <Plus className="w-5 h-5" />
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Добавить опцию</DialogTitle>
-        </DialogHeader>
-        <div className="flex flex-col gap-4 py-4">
-          <div>
-            <Label className="text-base font-medium">Название опции</Label>
-            <div className="mt-1">
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={18}
-              />
-            </div>
-          </div>
-          <div>
-            <Label className="text-base font-medium">
-              Вид отображения опции
-            </Label>
-            <div className="mt-1">
-              <RadioGroup
-                value={type}
-                onValueChange={(value) =>
-                  setType(value as "STRING" | "BOOLEAN")
-                }
-                className="flex flex-row gap-3"
+      <DialogContent className="max-w-lg">
+        <div className="flex items-center h-16 px-6">
+          <DialogClose className="ml-auto opacity-70 hover:opacity-100 transition-opacity">
+            <Cross1Icon className="h-5 w-5" />
+          </DialogClose>
+        </div>
+        <div className="px-6 pb-6 overflow-x-hidden overflow-y-auto">
+          <div className="w-[320px] min-h-96 mx-auto">
+            <DialogHeader className="mb-8 items-center">
+              <DialogTitle className="mt-8 text-2xl font-medium">
+                Добавить опцию
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Field>
+                <Label className="text-base font-medium">Название опции</Label>
+
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={18}
+                />
+              </Field>
+              <Field>
+                <Label className="text-base font-medium">
+                  Вид отображения опции
+                </Label>
+
+                <RadioGroup
+                  value={type}
+                  onValueChange={(value) =>
+                    setType(value as "STRING" | "BOOLEAN")
+                  }
+                  className="flex flex-row gap-3"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="BOOLEAN" id="option-boolean" />
+                    <Label htmlFor="option-boolean">Галка</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="STRING" id="option-string" />
+                    <Label htmlFor="option-string">Текст</Label>
+                  </div>
+                </RadioGroup>
+              </Field>
+
+              <Button
+                onClick={() => {
+                  onAdd?.({ name, type });
+                  setOpen(false);
+                }}
+                className="w-full"
+                type="button"
               >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="BOOLEAN" id="option-boolean" />
-                  <Label htmlFor="option-boolean">Галка</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="STRING" id="option-string" />
-                  <Label htmlFor="option-string">Текст</Label>
-                </div>
-              </RadioGroup>
+                Сохранить
+              </Button>
             </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button
-            onClick={() => {
-              onAdd?.({ name, type });
-              setOpen(false);
-            }}
-            className="w-full"
-            type="button"
-          >
-            Сохранить
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

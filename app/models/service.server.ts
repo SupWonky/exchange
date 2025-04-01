@@ -1,4 +1,5 @@
 import { Category, Media, Service, User } from "@prisma/client";
+import { FilterObject } from "prisma/utils";
 
 import { prisma } from "~/db.server";
 import { formatSlug } from "~/lib/utils";
@@ -135,11 +136,17 @@ export async function updateServiceStatus({
 
 export async function getServiceItemsByCategory({
   categoryId,
+  filters,
 }: {
   categoryId: Category["id"];
+  filters?: FilterObject;
 }) {
+  const where = {
+    category: { path: { startsWith: `%${categoryId}` } },
+    ...filters,
+  };
   return prisma.service.findMany({
-    where: { category: { path: { startsWith: `%${categoryId}` } } },
+    where: where,
     include: { media: true, user: true, pricingTier: true },
     take: 6,
   });

@@ -1,11 +1,16 @@
 import { useSearchParams } from "@remix-run/react";
 import React from "react";
 
+type Direction = "back" | "forward";
+
 interface ModalContextValues {
   open: boolean;
-  setOpen: (value: boolean) => void;
-  openModal: (name: string) => void;
+  setOpen: (open: boolean) => void;
+  setModal: (name: string) => void;
   closeModal: () => void;
+  direction?: Direction;
+  canGoBack: boolean;
+  goBack: () => void;
 }
 
 const ModalContext = React.createContext<ModalContextValues | undefined>(
@@ -13,27 +18,70 @@ const ModalContext = React.createContext<ModalContextValues | undefined>(
 );
 
 export function ModalProvider({ children }: { children: React.ReactNode }) {
+  const [history, setHistory] = React.useState<string[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [open, setOpen] = React.useState(false);
+  const [direction, setDirection] = React.useState<Direction>();
 
-  console.log(open);
+  const currentModal = searchParams.get("modal");
+  const [open, setOpen] = React.useState(Boolean(currentModal));
+  const canGoBack = history.length > 1;
 
-  const openModal = (name: string) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("modal", name);
-    setSearchParams(params, { preventScrollReset: true });
-    setOpen(true);
-  };
+  React.useEffect(() => {
+    if (currentModal) {
+      setOpen(true);
+    } else {
+      setHistory([]);
+      setOpen(false);
+    }
+  }, [currentModal]);
 
-  const closeModal = () => {
+  const setModal = React.useCallback(
+    (name: string) => {
+      const params = new URLSearchParams(searchParams);
+      params.set("modal", name);
+      setSearchParams(params, { preventScrollReset: true });
+      setHistory((prev) => [...prev, name]);
+      setDirection("forward");
+    },
+    [searchParams, setSearchParams]
+  );
+
+  const closeModal = React.useCallback(() => {
     const params = new URLSearchParams(searchParams);
     params.delete("modal");
     setSearchParams(params, { preventScrollReset: true });
-    setOpen(false);
-  };
+  }, [searchParams, setSearchParams]);
+
+  const goBack = React.useCallback(() => {
+    if (history.length <= 1) return;
+
+    const newHistory = history.slice(0, -1);
+    const prevModal = newHistory[newHistory.length - 1];
+
+    const params = new URLSearchParams(searchParams);
+    if (prevModal) {
+      params.set("modal", prevModal);
+    } else {
+      params.delete("modal");
+    }
+    setSearchParams(params, { preventScrollReset: true });
+
+    setHistory(newHistory);
+    setDirection("back");
+  }, [history, searchParams, setSearchParams]);
 
   return (
-    <ModalContext.Provider value={{ open, setOpen, openModal, closeModal }}>
+    <ModalContext.Provider
+      value={{
+        open,
+        setOpen,
+        setModal,
+        closeModal,
+        canGoBack,
+        goBack,
+        direction,
+      }}
+    >
       {children}
     </ModalContext.Provider>
   );

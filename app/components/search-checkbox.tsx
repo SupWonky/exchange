@@ -21,9 +21,8 @@ export function SearchCheckbox({ name, value, ...props }: SearchCheckboxProps) {
       name={name}
       value={value}
       checked={checked}
-      onChange={(e) => {
-        const target = e.target as HTMLInputElement;
-        setChecked(target.checked);
+      onCheckedChange={(checked) => {
+        setChecked(checked === true);
       }}
       {...props}
     />

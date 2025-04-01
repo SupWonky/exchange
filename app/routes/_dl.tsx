@@ -1,22 +1,23 @@
+import { LoaderFunctionArgs } from "@remix-run/node";
 import { Outlet, useLoaderData } from "@remix-run/react";
 import { CategoryMenu } from "~/components/category-menu";
 import { Footer } from "~/components/footer";
-//import { Footer } from "~/components/footer";
 import { SiteHeader } from "~/components/header";
 import { getCategoriesTree } from "~/models/category.server";
 
-export const loader = async () => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const categories = await getCategoriesTree();
-  return categories;
+
+  return { categories };
 };
 
 export default function DefaultLayout() {
-  const data = useLoaderData<typeof loader>();
+  const { categories } = useLoaderData<typeof loader>();
 
   return (
     <>
       <SiteHeader />
-      <CategoryMenu categories={data} />
+      <CategoryMenu categories={categories} />
       <div className="flex-1 mb-12 mt-6">
         <Outlet />
       </div>

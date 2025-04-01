@@ -17,6 +17,7 @@ import { BalanceModal } from "./components/modals/balance";
 import { LoginDialog } from "./components/modals/login";
 import { JoinDialog } from "./components/modals/join";
 import { ModalProvider } from "./components/providers/modal-provider";
+import { getUserPrefs } from "./lib/user.server";
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -33,8 +34,9 @@ export const links: LinksFunction = () => [
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUser(request);
+  const prefs = await getUserPrefs(request);
 
-  return { user };
+  return { user, prefs };
 };
 
 export function App() {

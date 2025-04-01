@@ -11,9 +11,11 @@ import * as React from "react";
 export function CategoryBreadcrumbs({
   categoryTree,
   lastLink,
+  className,
 }: {
   categoryTree: Category[];
   lastLink?: boolean;
+  className?: string;
 }) {
   if (categoryTree.length < 2) {
     throw new Error("Breadcrumbs should be provided with at least 2 items");
@@ -22,7 +24,7 @@ export function CategoryBreadcrumbs({
   const lastItem = categoryTree[categoryTree.length - 1];
 
   return (
-    <Breadcrumb>
+    <Breadcrumb className={className}>
       <BreadcrumbList>
         {categoryTree
           .slice(undefined, categoryTree.length - (lastLink ? 0 : 1))
