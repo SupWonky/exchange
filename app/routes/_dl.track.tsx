@@ -1,3 +1,5 @@
+import { getInputProps, useForm } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod";
 import { OrderStatus } from "@prisma/client";
 import {
   ActionFunctionArgs,
@@ -26,10 +28,13 @@ import {
   UserCheck,
   XCircle,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { InputConform } from "~/components/conform/input";
+import { MessageSchema, TrackAction } from "~/constants/schemas";
 import { formatDate } from "~/lib/utils";
+import { createMessage } from "~/models/chat.server";
 import { getOrder, updateOrderStatus } from "~/models/order.server";
-import { getUser } from "~/session.server";
+import { getUser, requireUserId } from "~/session.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUser(request);
@@ -51,55 +56,59 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  const userId = await requireUserId(request);
+  const formData = await request.formData();
+  console.log(formData);
+  const submission = parseWithZod(formData, { schema: TrackAction });
+
+  if (submission.status !== "success") {
+    return submission.reply();
+  }
+
   const url = new URL(request.url);
   const orderId = url.searchParams.get("id");
 
-  if (!orderId) return { error: "Неверный ID заказа", status: 400 };
+  if (!orderId) {
+    return submission.reply({ formErrors: ["Заказ не указан"] });
+  }
 
-  const formData = await request.formData();
-  const intent = formData.get("intent");
-  const message = formData.get("message");
+  const value = submission.value;
 
-  try {
-    switch (intent) {
-      case "sendMessage":
-        if (!message || typeof message !== "string" || !message.trim())
-          return { error: "Сообщение не может быть пустым", status: 400 };
-        await addOrderMessage(orderId, message.toString());
-        return { success: true };
+  console.log(value);
 
-      case "updateStatus":
-        const newStatus = formData.get("status");
-        if (!newStatus) return { error: "Отсутствует статус", status: 400 };
-        await updateOrderStatus({
-          orderId,
-          newStatus: newStatus.toString() as OrderStatus,
-        });
-        return { success: true };
+  switch (value.intent) {
+    case "sendMessage":
+      const res = await createMessage({
+        content: value.content,
+        senderId: userId,
+        chatId: value.chatId,
+      });
+      console.log(res);
+      return submission.reply({ resetForm: true });
 
-      default:
-        return { error: "Неверное действие", status: 400 };
-    }
-  } catch (error) {
-    return { error: "Ошибка обработки запроса", status: 500 };
+    case "updateStatus":
+      await updateOrderStatus({
+        orderId,
+        newStatus: value.status as OrderStatus,
+      });
+      return {};
   }
 };
 
 export default function OrderTackingPage() {
   const { order, user } = useLoaderData<typeof loader>();
-  const fetcher = useFetcher();
-  const messageFormRef = useRef<HTMLFormElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [message, setMessage] = useState("");
-  const [isMessageSending, setIsMessageSending] = useState(false);
+  const fetcher = useFetcher<typeof action>();
 
-  useEffect(() => {
-    if (fetcher.state === "idle" && isMessageSending) {
-      setMessage("");
-      setIsMessageSending(false);
-      messageFormRef.current?.reset();
-    }
-  }, [fetcher.state, isMessageSending]);
+  const [form, fields] = useForm({
+    lastResult: fetcher.state === "idle" ? fetcher.data : null,
+    onValidate({ formData }) {
+      return parseWithZod(formData, { schema: MessageSchema });
+    },
+    defaultValue: {
+      chatId: order.chatId,
+    },
+  });
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const getStatusInfo = (status: OrderStatus) => {
     const statusConfig = {
@@ -155,14 +164,6 @@ export default function OrderTackingPage() {
       { intent: "updateStatus", status: newStatus },
       { method: "post" }
     );
-  };
-
-  const handleSendMessage = (e: Event) => {
-    e.preventDefault();
-    if (!message.trim()) return;
-
-    setIsMessageSending(true);
-    fetcher.submit({ intent: "sendMessage", message }, { method: "post" });
   };
 
   const statusInfo = getStatusInfo(order.status);
@@ -341,27 +342,31 @@ export default function OrderTackingPage() {
             </div>
 
             {/* Поле ввода */}
-            <fetcher.Form
-              ref={messageFormRef}
-              method="post"
-              className="p-4 border-t"
-              onSubmit={handleSendMessage}
-            >
+            <fetcher.Form id={form.id} method="post" className="p-4 border-t">
               <div className="flex gap-2">
-                <input
-                  type="text"
-                  name="message"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                <InputConform
+                  meta={fields.content}
                   placeholder="Введите сообщение..."
-                  className="flex-1 border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 border rounded-full"
+                  autoComplete="off"
                   disabled={fetcher.state !== "idle"}
+                  type="text"
                 />
-                <input type="hidden" name="intent" value="sendMessage" />
+                <input
+                  className="sr-only"
+                  {...getInputProps(fields.chatId, { type: "text" })}
+                />
+                <input
+                  className="sr-only"
+                  name="intent"
+                  value="sendMessage"
+                  readOnly
+                />
+
                 <button
                   type="submit"
                   className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 transition-colors"
-                  disabled={!message.trim() || fetcher.state !== "idle"}
+                  disabled={fetcher.state !== "idle"}
                 >
                   <Send size={20} />
                 </button>

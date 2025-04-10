@@ -112,7 +112,7 @@ function ServiceCard({ service }: { service: ServiceType }) {
   const image = service.media.at(0);
 
   return (
-    <Card className="group overflow-hidden transition-shadow hover:shadow-lg rounded-lg">
+    <Card className="group overflow-hidden hover:shadow-lg rounded-lg">
       <div className="relative">
         <Link
           to={`/services/${service.slug}`}
@@ -140,7 +140,7 @@ function ServiceCard({ service }: { service: ServiceType }) {
           </Badge>
         )} */}
 
-        <button className="absolute top-3 right-3 p-1.5 bg-black/40 backdrop-blur rounded-full transition-colors text-white hover:text-red-500">
+        <button className="absolute top-3 right-3 p-1.5 bg-black/40 rounded-full transition-colors text-white hover:text-red-500">
           <HeartIcon className="h-4 w-4" />
         </button>
       </div>

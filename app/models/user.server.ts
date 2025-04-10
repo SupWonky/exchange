@@ -93,3 +93,14 @@ export async function topupBalance({
     }),
   ]);
 }
+
+export async function updateBlog({
+  id,
+  name,
+  description,
+}: Pick<User, "id" | "name" | "description">) {
+  return prisma.user.update({
+    data: { name, description },
+    where: { id: id },
+  });
+}

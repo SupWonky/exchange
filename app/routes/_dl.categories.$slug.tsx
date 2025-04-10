@@ -26,8 +26,21 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   let services = undefined;
   if (category.parent) {
     const searchParams = new URL(request.url).searchParams;
-    searchParams.services = await getServiceItemsByCategory({
+
+    const prices = searchParams.get("price")?.split("_");
+
+    services = await getServiceItemsByCategory({
       categoryId: category.id,
+      filters: {
+        pricingTier: {
+          some: {
+            price: {
+              ...(prices?.at(0) ? { gte: Number(prices[0]) } : {}),
+              ...(prices?.at(1) ? { lte: Number(prices[1]) } : {}),
+            },
+          },
+        },
+      },
     });
   }
   return { category, services, categoryTree };

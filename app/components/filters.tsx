@@ -381,7 +381,18 @@ export function ConfigurableFilter({
   const [open, setOpen] = React.useState(false);
 
   const handleChange = (e: React.FormEvent<HTMLFormElement>) => {
-    submit(e.currentTarget, { replace: true, preventScrollReset: true });
+    const formData = new FormData(e.currentTarget);
+
+    const preserveParams = ["q", "page", "sort"];
+
+    preserveParams.forEach((param) => {
+      const value = searchParams.get(param);
+      if (value && !formData.has(param)) {
+        formData.append(param, value);
+      }
+    });
+
+    submit(formData, { replace: true, preventScrollReset: true });
   };
 
   const filterContent = (

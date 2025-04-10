@@ -4,7 +4,7 @@ import {
   LoaderFunctionArgs,
   redirect,
 } from "@remix-run/node";
-import { popupSchema } from "~/constants/schemas";
+import { PopupSchema } from "~/constants/schemas";
 import { topupBalance } from "~/models/user.server";
 import { getUser } from "~/session.server";
 
@@ -20,7 +20,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const formData = await request.formData();
 
-  const submission = parseWithZod(formData, { schema: popupSchema });
+  const submission = parseWithZod(formData, { schema: PopupSchema });
 
   if (submission.status !== "success") {
     return submission.reply();

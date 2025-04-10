@@ -39,13 +39,17 @@ export async function getChatMessages({
 export async function createChat({
   participants,
 }: {
-  participants: Pick<User, "id">[];
+  participants: User["id"][];
 }) {
+  const result = participants.map((item) => ({ id: item }));
   return prisma.chat.create({
     data: {
       participants: {
-        connect: participants,
+        connect: result,
       },
+    },
+    include: {
+      participants: true,
     },
   });
 }
@@ -97,6 +101,22 @@ export async function getChatsByUser(userId: User["id"]) {
         order: null,
       },
     });
+}
+
+export async function getChatByUsers({
+  participants,
+}: {
+  participants: User["id"][];
+}) {
+  return prisma.chat.findFirst({
+    where: {
+      AND: [
+        { participants: { some: { id: { equals: participants[0] } } } },
+        { participants: { some: { id: { equals: participants[1] } } } },
+      ],
+    },
+    include: { participants: true },
+  });
 }
 
 export async function getOrdersChatByUser(userId: User["id"]) {

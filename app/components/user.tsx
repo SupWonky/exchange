@@ -1,4 +1,4 @@
-import { Form, NavLink, useFetcher } from "@remix-run/react";
+import { Form, Link, NavLink, useFetcher } from "@remix-run/react";
 
 import { useOptionalPrefs, useOptionalUser } from "~/utils";
 
@@ -14,6 +14,20 @@ import {
 } from "./ui/dropdown-menu";
 import { Wallet } from "lucide-react";
 import { useModal } from "./providers/modal-provider";
+
+const links = {
+  seller: [
+    { url: "/services", label: "Услуги" },
+    { url: "/orders", label: "Заказы" },
+    { url: "/exchange", label: "Биржа" },
+    { url: "/inbox", label: "Чат" },
+  ],
+  buyer: [
+    { url: "/orders", label: "Заказы" },
+    { url: "/projects", label: "Проекты" },
+    { url: "/inbox", label: "Чат" },
+  ],
+};
 
 export function User() {
   const user = useOptionalUser();
@@ -37,36 +51,19 @@ export function User() {
     return (
       <div className="flex flex-row items-center gap-6">
         <div className="space-x-8 flex">
-          <NavLink
-            className={({ isActive }) =>
-              `transition-colors ${
-                isActive ? "text-indigo-500" : ""
-              } hover:text-indigo-500`
-            }
-            to="/services"
-          >
-            Услуги
-          </NavLink>
-          <NavLink
-            className={({ isActive }) =>
-              `transition-colors ${
-                isActive ? "text-indigo-500" : ""
-              } hover:text-indigo-500`
-            }
-            to="/orders"
-          >
-            Заказы
-          </NavLink>
-          <NavLink
-            className={({ isActive }) =>
-              `transition-colors ${
-                isActive ? "text-indigo-500" : ""
-              } hover:text-indigo-500`
-            }
-            to="/inbox"
-          >
-            Чат
-          </NavLink>
+          {links[role].map((link, idx) => (
+            <NavLink
+              to={link.url}
+              className={({ isActive }) =>
+                `transition-colors ${
+                  isActive ? "text-indigo-500" : ""
+                } hover:text-indigo-500`
+              }
+              key={idx}
+            >
+              {link.label}
+            </NavLink>
+          ))}
 
           <button
             onClick={() => setModal("balance")}
@@ -123,7 +120,9 @@ export function User() {
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Профиль</DropdownMenuItem>
-            <DropdownMenuItem>Настройки</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/settings">Настройки</Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <LogoutDropdownMenuButton />
           </DropdownMenuContent>

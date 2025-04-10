@@ -30,7 +30,7 @@ const PricingSchema = z.object({
   ),
 });
 
-const serviceSchema = z.object({
+const ServiceSchema = z.object({
   title: z.string({ message: "Введите название" }),
   categoryId: z.string({ message: "Выберите рубрику" }),
   content: z.string({ message: "Введите описание" }),
@@ -54,16 +54,8 @@ const serviceSchema = z.object({
   ),
 });
 
-const messageSchema = z.object({
+const MessageSchema = z.object({
   content: z.string({ message: "Введите сообщение" }),
-  senderId: z.string({ message: "Ошибка, не указан отправитель" }),
-  chatId: z.string({ message: "Ошибка, не указан чат" }),
-});
-
-const messageOrderSchema = z.object({
-  content: z.string({ message: "Введите сообщение" }),
-  senderId: z.string({ message: "Ошибка, не указан отправитель" }),
-  orderId: z.string({ message: "Ошибка, не указан заказ" }),
   chatId: z.string({ message: "Ошибка, не указан чат" }),
 });
 
@@ -96,14 +88,45 @@ const UserPrefs = z.object({
   role: z.enum(["buyer", "seller"]),
 });
 
+const BlogSchema = z.object({
+  username: z
+    .string({ required_error: "Назавние обязательное поле" })
+    .max(50, { message: "Максимум 50 символов" }),
+  description: z
+    .string()
+    .max(200, {
+      message: "Максимум 200 символов",
+    })
+    .optional(),
+});
+
+const TrackAction = z.discriminatedUnion("intent", [
+  z
+    .object({
+      intent: z.literal("sendMessage"),
+    })
+    .merge(MessageSchema),
+  z.object({
+    intent: z.literal("updateStatus"),
+    status: z.string(),
+  }),
+]);
+
+const ConversationSchema = z.object({
+  initMessage: z.string().max(300, "Message cannot exceed 300 characters"),
+  reciverId: z.string(),
+});
+
 export {
   PricingSchema,
   OptionSchema,
   UserPrefs,
-  serviceSchema,
-  messageSchema,
-  messageOrderSchema,
+  ServiceSchema,
+  MessageSchema,
   PopupSchema,
   LoginSchema,
   JoinSchema,
+  BlogSchema,
+  TrackAction,
+  ConversationSchema,
 };

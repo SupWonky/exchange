@@ -3,18 +3,18 @@ import { NavLink, Outlet, useLoaderData, useLocation } from "@remix-run/react";
 import { MessageCircle } from "lucide-react";
 import { cn, formatRelativeTime } from "~/lib/utils";
 import { getChatsByUser } from "~/models/chat.server";
-import { getUser } from "~/session.server";
+import { requireUserId } from "~/session.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await getUser(request);
+  const userId = await requireUserId(request);
 
-  if (!user) {
+  if (!userId) {
     return redirect("/login?redirectTo=/inbox");
   }
 
-  const chatsOfUser = await getChatsByUser(user.id);
+  const chatsOfUser = await getChatsByUser(userId);
 
-  return { chats: chatsOfUser, user: user };
+  return { chats: chatsOfUser };
 };
 
 export default function InboxLayout() {

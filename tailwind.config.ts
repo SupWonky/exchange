@@ -64,6 +64,28 @@ export default {
           "5": "hsl(var(--chart-5))",
         },
       },
+      keyframes: {
+        down: {
+          from: {
+            height: "0",
+          },
+          to: {
+            height: "var(--content-height)",
+          },
+        },
+        up: {
+          from: {
+            height: "var(--content-height)",
+          },
+          to: {
+            height: "0",
+          },
+        },
+      },
+      animation: {
+        up: "up 200ms ease-in forwards",
+        down: "down 200ms ease-out forwards",
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

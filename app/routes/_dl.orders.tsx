@@ -5,13 +5,120 @@ import { getUserId } from "~/session.server";
 import { formatCurrency, formatDate } from "~/lib/utils";
 import { Order, OrderStatus, PricingTier, Service, User } from "@prisma/client";
 import { Button } from "~/components/ui/button";
-import { ChevronRight } from "lucide-react";
+import {
+  ChevronRight,
+  Clock,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  FileCheck,
+  Loader,
+  FilePlus,
+  FileWarning,
+} from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 
 type OrderWithRelations = Order & {
-  pricingTier: PricingTier & { service: Service };
+  pricingTier: (PricingTier & { service: Service }) | null;
   buyer: User;
   seller: User;
+};
+
+// Status tab configuration
+const STATUS_TABS = [
+  { key: "PENDING", label: "Ожидающие" },
+  { key: "IN_PROGRESS", label: "В работе" },
+  { key: "REVIEW", label: "На проверке" },
+  { key: "COMPLETED", label: "Выполненные" },
+  { key: "CANCELED", label: "Отмененные" },
+] as const;
+
+// Status display configuration with Lucide icons
+const STATUS_DETAILS: Record<
+  string,
+  {
+    label: string;
+    color: string;
+    icon: React.ReactNode;
+    description: {
+      buyer: string;
+      seller: string;
+      general: string;
+    };
+  }
+> = {
+  PENDING: {
+    label: "Ожидает принятия",
+    color: "bg-yellow-100 text-yellow-800",
+    icon: <Clock className="h-5 w-5" />,
+    description: {
+      buyer: "Ожидает принятия исполнителем",
+      seller: "Требуется ваше принятие",
+      general: "Ожидает принятия",
+    },
+  },
+  IN_PROGRESS: {
+    label: "В работе",
+    color: "bg-blue-100 text-blue-800",
+    icon: <Loader className="h-5 w-5" />,
+    description: {
+      buyer: "Работа над заказом",
+      seller: "Работа над заказом",
+      general: "Работа над заказом",
+    },
+  },
+  REVIEW: {
+    label: "На проверке",
+    color: "bg-purple-100 text-purple-800",
+    icon: <FileCheck className="h-5 w-5" />,
+    description: {
+      buyer: "Ожидает вашей проверки",
+      seller: "Ожидает проверки заказчиком",
+      general: "На проверке",
+    },
+  },
+  COMPLETED: {
+    label: "Выполнен",
+    color: "bg-green-100 text-green-800",
+    icon: <CheckCircle className="h-5 w-5" />,
+    description: {
+      buyer: "Заказ успешно выполнен",
+      seller: "Заказ успешно выполнен",
+      general: "Заказ успешно выполнен",
+    },
+  },
+  CANCELED: {
+    label: "Отменен",
+    color: "bg-red-100 text-red-800",
+    icon: <XCircle className="h-5 w-5" />,
+    description: {
+      buyer: "Заказ был отменен",
+      seller: "Заказ был отменен",
+      general: "Заказ был отменен",
+    },
+  },
+  DISPUTE: {
+    label: "В споре",
+    color: "bg-orange-100 text-orange-800",
+    icon: <AlertCircle className="h-5 w-5" />,
+    description: {
+      buyer: "Заказ в стадии разрешения спора",
+      seller: "Заказ в стадии разрешения спора",
+      general: "В процессе разрешения спора",
+    },
+  },
+};
+
+// Default status display for fallback
+const DEFAULT_STATUS = {
+  label: "Неизвестно",
+  color: "bg-gray-100 text-gray-800",
+  icon: <FileWarning className="h-5 w-5" />,
+  description: {
+    buyer: "Статус не определен",
+    seller: "Статус не определен",
+    general: "Статус не определен",
+  },
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -52,7 +159,7 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="mx-auto px-4 py-8 xl:px-0 max-w-screen-xl overflow-scroll">
       <div className="mb-8">
         <h1 className="text-3xl font-semibold text-gray-900">Мои заказы</h1>
         <p className="text-gray-600 mt-1">
@@ -63,13 +170,7 @@ export default function OrdersPage() {
       {/* Status Navigation Tabs */}
       <div className="border-b">
         <nav className="flex -mb-px overflow-x-auto" aria-label="Tabs">
-          {[
-            { key: "PENDING", label: "Ожидающие" },
-            { key: "IN_PROGRESS", label: "В работе" },
-            { key: "REVIEW", label: "На проверке" },
-            { key: "COMPLETED", label: "Выполненные" },
-            { key: "CANCELED", label: "Отмененные" },
-          ].map((tab) => (
+          {STATUS_TABS.map((tab) => (
             <button
               key={tab.key}
               onClick={() => handleStatusChange(tab.key as OrderStatus)}
@@ -98,36 +199,7 @@ export default function OrdersPage() {
       {/* Orders List */}
       <div className="mt-6">
         {currentOrders.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
-              Нет заказов
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              У вас пока нет заказов со статусом{" "}
-              {
-                {
-                  PENDING: "Ожидающие",
-                  IN_PROGRESS: "В работе",
-                  REVIEW: "На проверке",
-                  COMPLETED: "Выполненные",
-                  CANCELED: "Отмененные",
-                }[currentStatus]
-              }
-            </p>
-          </div>
+          <EmptyOrdersState status={currentStatus} />
         ) : (
           <div className="space-y-4">
             {currentOrders.map((order) => (
@@ -136,6 +208,25 @@ export default function OrdersPage() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+interface EmptyOrdersStateProps {
+  status: string;
+}
+
+function EmptyOrdersState({ status }: EmptyOrdersStateProps) {
+  const statusLabel =
+    STATUS_TABS.find((tab) => tab.key === status)?.label || status;
+
+  return (
+    <div className="text-center py-12 bg-gray-50 rounded-lg">
+      <FilePlus className="mx-auto h-12 w-12 text-gray-400" />
+      <h3 className="mt-2 text-sm font-medium text-gray-900">Нет заказов</h3>
+      <p className="mt-1 text-sm text-gray-500">
+        У вас пока нет заказов со статусом {statusLabel}
+      </p>
     </div>
   );
 }
@@ -149,181 +240,72 @@ function OrderCard({ order, userId }: OrderCardProps) {
   const isBuyer = userId === order.buyerId;
   const counterparty = isBuyer ? order.seller : order.buyer;
 
-  const getStatusDetails = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return {
-          label: "Ожидает принятия",
-          color: "bg-yellow-100 text-yellow-800",
-          icon: (
-            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                clipRule="evenodd"
-              />
-            </svg>
-          ),
-        };
-      case "IN_PROGRESS":
-        return {
-          label: "В работе",
-          color: "bg-blue-100 text-blue-800",
-          icon: (
-            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path
-                fillRule="evenodd"
-                d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 10.414l2.293 2.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 12.414V15a1 1 0 102 0v-2.586z"
-                clipRule="evenodd"
-              />
-            </svg>
-          ),
-        };
-      case "REVIEW":
-        return {
-          label: "На проверке",
-          color: "bg-purple-100 text-purple-800",
-          icon: (
-            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-              <path
-                fillRule="evenodd"
-                d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
-                clipRule="evenodd"
-              />
-            </svg>
-          ),
-        };
-      case "COMPLETED":
-        return {
-          label: "Выполнен",
-          color: "bg-green-100 text-green-800",
-          icon: (
-            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-          ),
-        };
-      case "CANCELLED":
-        return {
-          label: "Отменен",
-          color: "bg-red-100 text-red-800",
-          icon: (
-            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                clipRule="evenodd"
-              />
-            </svg>
-          ),
-        };
-      case "DISPUTE":
-        return {
-          label: "В споре",
-          color: "bg-orange-100 text-orange-800",
-          icon: (
-            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path
-                fillRule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-          ),
-        };
-      default:
-        return {
-          label: status,
-          color: "bg-gray-100 text-gray-800",
-          icon: null,
-        };
-    }
-  };
-
-  const statusInfo = getStatusDetails(order.status);
+  const statusInfo = STATUS_DETAILS[order.status] || DEFAULT_STATUS;
+  const statusDescription = isBuyer
+    ? statusInfo.description.buyer
+    : statusInfo.description.seller;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden cursor-pointer">
-      <div className="p-5">
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 truncate">
-              {order.pricingTier.service.title}
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">
-              {isBuyer ? "Исполнитель: " : "Заказчик: "}
-              <span className="font-medium text-gray-700">
-                {counterparty.email}
-              </span>
-            </p>
-          </div>
-          <div className="flex items-center">
-            <span
-              className={`flex items-center space-x-1 rounded-full px-3 py-1 text-sm font-medium ${statusInfo.color}`}
-            >
-              {statusInfo.icon}
-              <span>{statusInfo.label}</span>
+    <div className="bg-card border p-5 rounded-lg shadow hover:shadow-lg overflow-hidden">
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="text-lg font-medium text-gray-900 truncate">
+            {order.pricingTier?.service.title}
+          </h3>
+          <p className="text-sm text-gray-500 mt-1">
+            {isBuyer ? "Исполнитель: " : "Заказчик: "}
+            <span className="font-medium text-gray-700">
+              {counterparty.email}
             </span>
-          </div>
+          </p>
         </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-gray-500">Тариф</p>
-            <p className="font-medium text-gray-900">
-              {order.pricingTier.variant}
-            </p>
-          </div>
-          <div>
-            <p className="text-gray-500">Стоимость</p>
-            <p className="font-medium text-gray-900">
-              {formatCurrency(order.pricingTier.price)} ₽
-            </p>
-          </div>
-          <div>
-            <p className="text-gray-500">ID заказа</p>
-            <p className="font-medium text-gray-900">#{order.id.slice(0, 8)}</p>
-          </div>
-          <div>
-            <p className="text-gray-500">Создан</p>
-            <p className="font-medium text-gray-900">
-              {formatDate(order.createdAt)}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
-          <div className="text-sm text-gray-500">
-            {order.status === "PENDING" &&
-              isBuyer &&
-              "Ожидает принятия исполнителем"}
-            {order.status === "PENDING" &&
-              !isBuyer &&
-              "Требуется ваше принятие"}
-            {order.status === "IN_PROGRESS" && "Работа над заказом"}
-            {order.status === "REVIEW" && isBuyer && "Ожидает вашей проверки"}
-            {order.status === "REVIEW" &&
-              !isBuyer &&
-              "Ожидает проверки заказчиком"}
-            {order.status === "COMPLETED" && "Заказ успешно выполнен"}
-            {order.status === "CANCELED" && "Заказ был отменен"}
-          </div>
-          <Button
-            className="inline-flex rounded-full items-center text-sm font-medium hover:no-underline gap-1"
-            asChild
-            variant="outline"
+        <div className="flex items-center">
+          <span
+            className={`flex items-center space-x-1 rounded-full px-3 py-1 text-sm font-medium ${statusInfo.color}`}
           >
-            <Link to={`/track?id=${order.id}`}>
-              Подробнее
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </Button>
+            {statusInfo.icon}
+            <span className="ml-1">{statusInfo.label}</span>
+          </span>
         </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <p className="text-gray-500">Тариф</p>
+          <p className="font-medium text-gray-900">
+            {order.pricingTier?.variant}
+          </p>
+        </div>
+        <div>
+          <p className="text-gray-500">Стоимость</p>
+          <p className="font-medium text-gray-900">
+            {formatCurrency(order.pricingTier?.price || 0)} ₽
+          </p>
+        </div>
+        <div>
+          <p className="text-gray-500">ID заказа</p>
+          <p className="font-medium text-gray-900">#{order.id.slice(0, 8)}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Создан</p>
+          <p className="font-medium text-gray-900">
+            {formatDate(order.createdAt)}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
+        <div className="text-sm text-gray-500">{statusDescription}</div>
+        <Button
+          className="inline-flex rounded-full items-center text-sm font-medium hover:no-underline gap-1"
+          asChild
+          variant="outline"
+        >
+          <Link to={`/track?id=${order.id}`}>
+            Подробнее
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </Button>
       </div>
     </div>
   );

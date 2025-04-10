@@ -64,7 +64,7 @@
 
 @layer base {
   html {
-    @apply scroll-smooth;
+    @apply scroll-auto;
   }
   body {
     @apply bg-background text-foreground overscroll-none;

@@ -4,7 +4,7 @@ import { siteConfig } from "~/config/site";
 
 export function Footer() {
   return (
-    <footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <footer className="border-t bg-background/95">
       <div className="mx-auto max-w-screen-xl px-4 py-12 sm:px-6">
         {/* Main Footer Grid */}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4 lg:grid-cols-5">

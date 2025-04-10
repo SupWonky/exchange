@@ -4,7 +4,7 @@ import { User } from "./user";
 
 export function SiteHeader() {
   return (
-    <header className="top-0 z-50 w-full border-b bg-background/90 backdrop-blur">
+    <header className="top-0 z-50 w-full border-b bg-background/90">
       <div className="container flex h-14 items-center">
         <MainNav />
         <SearchInput />
@@ -18,7 +18,7 @@ export function SiteHeader() {
 
 export function SellerHeader() {
   return (
-    <header className="top-0 z-50 w-full border-b bg-background/90 backdrop-blur">
+    <header className="top-0 z-50 w-full border-b bg-background/90">
       <div className="container flex h-14 items-center">
         <MainNav />
         <SearchInput />

@@ -1,6 +1,6 @@
 import { useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
-import { Message, Order } from "@prisma/client";
+import { Message } from "@prisma/client";
 import { LoaderFunctionArgs, redirect } from "@remix-run/node";
 import {
   Form,
@@ -9,12 +9,12 @@ import {
   useFetcher,
   useLoaderData,
 } from "@remix-run/react";
-import { ArrowLeft, ArrowUp, MessageCircle } from "lucide-react";
+import { ArrowLeft, ArrowUp } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { messageSchema } from "~/constants/schemas";
+import { MessageSchema } from "~/constants/schemas";
 import { cn, formatDate, formatTime, isSameDay } from "~/lib/utils";
 import {
   createMessage,
@@ -22,41 +22,45 @@ import {
   getChatMessages,
   getOrdersChatByUser,
 } from "~/models/chat.server";
-import { getUser } from "~/session.server";
+import { getUser, requireUserId } from "~/session.server";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   invariant(params.id, "Id not found");
 
   const user = await getUser(request);
+
   if (!user) {
     return redirect("/login?redirectTo=/inbox");
   }
 
   const url = new URL(request.url);
   const page = Number(url.searchParams.get("page") || "1");
-
   const chat = await getChatById(params.id);
-  if (!chat || !chat.participants.find((value) => value.id === user.id)) {
+
+  if (!chat) {
     throw new Response("Not Found", { status: 404 });
   }
 
   const messages = await getChatMessages({ chatId: chat.id, page });
   const ordersChat = await getOrdersChatByUser(user.id);
+
   return { chat, user, loadedMessages: messages || [], ordersChat };
 };
 
 export const action = async ({ request }: LoaderFunctionArgs) => {
-  const user = await getUser(request);
-  if (!user) {
-    return redirect("/login?redirectTo=/inbox");
-  }
+  const userId = await requireUserId(request);
+
   const formData = await request.formData();
-  const submission = parseWithZod(formData, { schema: messageSchema });
+  const submission = parseWithZod(formData, { schema: MessageSchema });
+
   if (submission.status !== "success") {
     return submission.reply();
   }
-  const { content, chatId, senderId } = submission.value;
-  await createMessage({ content, senderId, chatId });
+
+  const { content, chatId } = submission.value;
+
+  await createMessage({ content, senderId: userId, chatId });
+
   return submission.reply({ resetForm: true });
 };
 
@@ -84,7 +88,7 @@ export default function ChatPage() {
   const lastResult = useActionData<typeof action>();
   const [form, fields] = useForm({
     lastResult,
-    constraint: getZodConstraint(messageSchema),
+    constraint: getZodConstraint(MessageSchema),
   });
 
   const participant = chat.participants.find((item) => item.id !== user.id);

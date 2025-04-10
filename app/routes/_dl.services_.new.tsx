@@ -23,37 +23,14 @@ import {
   CardHeader,
 } from "~/components/ui/card";
 import { Label } from "~/components/ui/label";
-
-const serviceSchema = z.object({
-  title: z.string({ message: "Введите название" }),
-  categoryId: z.string({ message: "Выберите рубрику" }),
-  content: z.string({ message: "Введите описание" }),
-  media: z.preprocess(
-    (val) => {
-      try {
-        return typeof val === "string" ? JSON.parse(val) : val;
-      } catch {
-        return val; // Let Zod handle invalid format
-      }
-    },
-    z
-      .array(
-        z.object({
-          name: z.string(),
-          url: z.string(),
-          type: z.enum(["MOVIE", "IMAGE"]),
-        })
-      )
-      .min(1, "Прикрепите медиа файлы")
-  ),
-});
+import { ServiceSchema } from "~/constants/schemas";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await getUser(request);
   if (!user) return redirect("/login?redirectTo=/services/new");
 
   const formData = await request.formData();
-  const submission = parseWithZod(formData, { schema: serviceSchema });
+  const submission = parseWithZod(formData, { schema: ServiceSchema });
 
   if (submission.status !== "success") {
     return submission.reply();
@@ -94,7 +71,7 @@ export default function CreateServicePage() {
   const { categories, service } = useLoaderData<typeof loader>();
   const [form, fields] = useForm({
     lastResult,
-    constraint: getZodConstraint(serviceSchema),
+    constraint: getZodConstraint(ServiceSchema),
     defaultValue: {
       title: service?.title,
       categoryId: service?.categoryId,

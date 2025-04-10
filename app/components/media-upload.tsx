@@ -154,7 +154,7 @@ export function MediaUpload({ submit, defualtValue }: MediaUploadProps) {
                 onClick={() => {
                   setAttachments((prev) => prev.filter((_, i) => i !== idx));
                 }}
-                className="absolute top-1 right-1 w-6 h-6 backdrop-blur bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                className="absolute top-1 right-1 w-6 h-6 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                 aria-label={`Удалить ${attachment.title || "файл"}`}
                 type="button"
               >

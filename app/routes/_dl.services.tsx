@@ -125,7 +125,7 @@ export default function ManageServicesPage() {
               <CardContent className="p-6">
                 <div className="flex flex-col md:flex-row md:gap-8">
                   {/* Image Container */}
-                  <div className="relative rounded-lg overflow-hidden aspect-video md:w-1/4 flex-shrink-0">
+                  <div className="relative rounded-lg overflow-hidden bg-muted/40 aspect-video md:w-1/4 flex-shrink-0">
                     <img
                       src={
                         service.media[0]?.url ??
@@ -133,6 +133,7 @@ export default function ManageServicesPage() {
                       }
                       alt={service.title}
                       className="h-auto w-full object-cover"
+                      loading="lazy"
                     />
                     <Badge className="absolute top-2 left-2">Черновик</Badge>
                   </div>

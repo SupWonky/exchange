@@ -1,4 +1,4 @@
-import { Category, Media, Service, User } from "@prisma/client";
+import { Category, Media, Prisma, Service, User } from "@prisma/client";
 import { FilterObject } from "prisma/utils";
 
 import { prisma } from "~/db.server";
@@ -139,15 +139,22 @@ export async function getServiceItemsByCategory({
   filters,
 }: {
   categoryId: Category["id"];
-  filters?: FilterObject;
+  filters?: Prisma.ServiceWhereInput;
 }) {
-  const where = {
-    category: { path: { startsWith: `%${categoryId}` } },
-    ...filters,
+  const where: Prisma.ServiceWhereInput = {
+    AND: [
+      { category: { path: { startsWith: `%${categoryId}` } } },
+      { ...filters },
+    ],
   };
+
   return prisma.service.findMany({
     where: where,
-    include: { media: true, user: true, pricingTier: true },
+    include: {
+      media: true,
+      user: true,
+      pricingTier: { where: { variant: "BASIC" } },
+    },
     take: 6,
   });
 }

@@ -109,7 +109,7 @@ export function Slider({
           >
             <ChevronRight className="w-6 h-6" />
           </button>
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 rounded-full bg-black/50 backdrop-blur p-1">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 rounded-full bg-black/50 p-1">
             {images.map((_, index) => (
               <button
                 key={index}
