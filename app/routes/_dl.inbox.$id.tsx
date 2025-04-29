@@ -284,7 +284,7 @@ export default function ChatPage() {
             name={fields.content.name}
             placeholder="Напишите сообщение..."
             autoComplete="off"
-            className="rounded-full h-11 focus-visible:ring-primary"
+            className="rounded-full h-11"
           />
           <Button
             type="submit"
