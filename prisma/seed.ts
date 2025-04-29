@@ -52,7 +52,7 @@ async function seed() {
   console.log(` - ${john.email}`);
   console.log(` - ${emma.email}`);
 
-  // ─── CREATE CATEGORIES ──────────────────────────────────────
+  // ─── PARSE AND CREATE CATEGORIES ──────────────────────────────────────
   // Create two root categories.
 
   const image = await prisma.media.create({
@@ -210,6 +210,8 @@ async function seed() {
 
   console.log("Database has been seeded. 🌱");
 }
+
+async function scrapeCategoires() {}
 
 seed()
   .catch((e) => {

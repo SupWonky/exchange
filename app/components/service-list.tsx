@@ -11,7 +11,7 @@ type ServiceType = Awaited<ReturnType<typeof getServiceItemsByCategory>>[0];
 
 type ServiceListProps = (
   | { categoryId: string; query?: never }
-  | { categoryId?: never; query: string }
+  | { categoryId?: never; query?: string }
 ) & {
   limit?: number;
   initServices: ServiceType[];

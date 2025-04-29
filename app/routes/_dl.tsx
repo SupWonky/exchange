@@ -16,8 +16,7 @@ export default function DefaultLayout() {
 
   return (
     <>
-      <SiteHeader />
-      <CategoryMenu categories={categories} />
+      <SiteHeader categories={categories} />
       <div className="flex-1 mb-12 mt-6">
         <Outlet />
       </div>

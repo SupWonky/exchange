@@ -36,14 +36,10 @@ export function BalanceModal({ user }: { user: User }) {
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: PopupSchema });
     },
-    onSubmit() {
-      setOpen(false);
-    },
     shouldValidate: "onBlur",
     shouldRevalidate: "onInput",
   });
 
-  const [open, setOpen] = useState(true);
   const [isTopUpMode, setIsTopUpMode] = useState(false);
 
   const isSubmitting = fetcher.state !== "idle";
@@ -199,12 +195,7 @@ export function BalanceModal({ user }: { user: User }) {
           </TabsContent>
         </Tabs>
       ) : (
-        <fetcher.Form
-          method="post"
-          action="/balance"
-          id={form.id}
-          onSubmit={form.onSubmit}
-        >
+        <fetcher.Form method="post" action="/api/v1/invoice" id={form.id}>
           <Card>
             <CardHeader>
               <CardTitle>Пополнение баланса</CardTitle>

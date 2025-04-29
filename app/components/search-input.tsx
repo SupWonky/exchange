@@ -24,7 +24,7 @@ export function SearchInput() {
   }, []);
 
   return (
-    <div className="relative w-full max-w-xs flex-1 md:flex-none">
+    <div className="relative w-full md:max-w-xs flex-1 md:flex-none mx-4 sm:mx-6 lg:mx-0">
       <Form
         method="get"
         action="search"
@@ -36,7 +36,7 @@ export function SearchInput() {
           ref={inputRef}
           type="search"
           placeholder="Найти услугу..."
-          className="flex h-8 w-full rounded-md border bg-transparent px-10 py-2 shadow-sm transition-colors"
+          className="h-8 px-10 py-2"
           aria-label="Search services"
           defaultValue={defaultValue}
         />

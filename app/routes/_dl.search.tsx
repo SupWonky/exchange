@@ -6,13 +6,9 @@ import { ConfigurableFilter, FilterSectionType } from "~/components/filters";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const searchParams = new URL(request.url).searchParams;
-  const query = searchParams.get("q");
+  const query = searchParams.get("q") || undefined;
 
-  if (!query || query.length === 0) {
-    throw new Response("Not Found", { status: 404 });
-  }
-
-  const services = await getServiceListItems({ query });
+  const services = await getServiceListItems({ query: query });
 
   return { services, query };
 };
@@ -57,7 +53,9 @@ export default function SearchPage() {
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-semibold">Заказать «{query}»</h1>
+        <h1 className="text-3xl font-semibold">
+          {query ? `Заказать «${query}»` : "Все услуги"}
+        </h1>
       </div>
 
       <div className="grid lg:grid-cols-[280px_1fr] gap-6">

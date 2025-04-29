@@ -11,7 +11,7 @@ interface CategoryMenuProps {
 
 export function CategoryMenu({ categories }: CategoryMenuProps) {
   return (
-    <nav className="border-b bg-background">
+    <nav className="border-t bg-background hidden lg:block">
       <ul className="container mx-auto flex gap-8 px-4">
         {categories.map((category) => (
           <CategoryItem key={category.id} category={category} />
@@ -29,7 +29,7 @@ function CategoryItem({ category }: { category: CategoryNode }) {
         className="py-2 block group-hover:text-primary relative transition-colors"
       >
         {category.name}
-        <span className="absolute left-0 bottom-0 w-full h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+        <span className="absolute left-0 bottom-0 w-full h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left" />
       </Link>
       {category.children.length > 0 && (
         <div className="absolute left-0 top-full bg-white border opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-opacity z-10">
@@ -39,12 +39,10 @@ function CategoryItem({ category }: { category: CategoryNode }) {
                 <h4 className="text-lg font-semibold mb-2.5 px-6 text-gray-800 whitespace-nowrap">
                   {subCategory.name}
                 </h4>
-                <ul>
+                <ul className="overflow-hidden">
                   {subCategory.children.map((child) => (
-                    <li
-                      className="relative before:absolute before:top-0 before:bottom-0 hover:before:w-0.5 before:bg-primary"
-                      key={child.id}
-                    >
+                    <li className="relative group/item" key={child.id}>
+                      <div className="absolute top-0 bottom-0 w-0.5 -translate-x-full will-change-transform group-hover/item:translate-x-0 transition-transform duration-200 origin-left bg-primary" />
                       <Link
                         to={`/categories/${child.slug}`}
                         className="block py-1 px-6 hover:text-primary transition-colors whitespace-nowrap"

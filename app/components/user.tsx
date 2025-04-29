@@ -50,7 +50,7 @@ export function User() {
   if (user) {
     return (
       <div className="flex flex-row items-center gap-6">
-        <div className="space-x-8 flex">
+        <div className="space-x-8 hidden min-[800px]:flex">
           {links[role].map((link, idx) => (
             <NavLink
               to={link.url}
