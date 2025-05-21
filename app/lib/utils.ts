@@ -74,3 +74,17 @@ export function formatDate(date: Date) {
 export function secondsToDays(value: number) {
   return value / 60 / 60 / 24;
 }
+
+type FileType = "OTHER" | "IMAGE" | "MOVIE";
+
+export function parseFileType(value: string) {
+  let type: FileType = "OTHER";
+
+  if (value.startsWith("image")) {
+    type = "IMAGE";
+  } else if (value.startsWith("video")) {
+    type = "MOVIE";
+  }
+
+  return type;
+}

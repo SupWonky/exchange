@@ -90,7 +90,7 @@ export function LoginDialog() {
           </div>
 
           <div className="text-center text-sm text-gray-500">
-            Нету аккаунта?{" "}
+            <span className="mr-1 hidden sm:inline-block">Нету аккаунта?</span>
             <Button
               type="button"
               variant="link"

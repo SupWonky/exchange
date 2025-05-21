@@ -73,6 +73,7 @@ model Media {
   users      User[]
   services   Service[]
   categoires Category[]
+  messages   Message[]
 }
 
 model User {
@@ -100,7 +101,7 @@ model User {
 }
 
 model Chat {
-  id        String   @id @default(cuid(2))
+  id        String      @id @default(cuid(2))
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 
@@ -115,13 +116,14 @@ model Message {
   createdAt DateTime     @default(now())
   read      Boolean   @default(false)
   isSystemMessage Boolean @default(false)
-  metadata  Json?
 
   sender    User    @relation(fields: [senderId], references: [id], onDelete: Cascade)
   senderId  String
 
   chat  Chat @relation(fields: [chatId], references: [id])
   chatId String
+
+  attachments Media[]
 }
 
 model Password {
@@ -135,6 +137,7 @@ model Service {
   title         String
   slug          String
   description   String?
+  requiredInfo  String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   deletedAt     DateTime?
@@ -266,6 +269,7 @@ model Category {
   name String
   slug String @unique
   path String
+  url  String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

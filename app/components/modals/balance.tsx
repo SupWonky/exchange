@@ -195,7 +195,7 @@ export function BalanceModal({ user }: { user: User }) {
           </TabsContent>
         </Tabs>
       ) : (
-        <fetcher.Form method="post" action="/api/v1/invoice" id={form.id}>
+        <fetcher.Form method="post" action="/balance" id={form.id}>
           <Card>
             <CardHeader>
               <CardTitle>Пополнение баланса</CardTitle>

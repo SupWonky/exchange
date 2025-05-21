@@ -59,7 +59,7 @@ export const action = async ({ request }: LoaderFunctionArgs) => {
 
   const { content, chatId } = submission.value;
 
-  await createMessage({ content, senderId: userId, chatId });
+  await createMessage({ content, senderId: userId, chatId, attachments: [] });
 
   return submission.reply({ resetForm: true });
 };

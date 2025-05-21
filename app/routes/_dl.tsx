@@ -8,7 +8,7 @@ import { getCategoriesTree } from "~/models/category.server";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const categories = await getCategoriesTree();
 
-  return { categories };
+  return { categories: categories };
 };
 
 export default function DefaultLayout() {

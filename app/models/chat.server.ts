@@ -1,4 +1,4 @@
-import { Chat, Message, User } from "@prisma/client";
+import { Chat, Media, Message, User } from "@prisma/client";
 import { prisma } from "~/db.server";
 
 export async function getChatById(id: Chat["id"]) {
@@ -58,13 +58,19 @@ export async function createMessage({
   content,
   chatId,
   senderId,
-}: Pick<Message, "content" | "chatId" | "senderId">) {
+  attachments,
+}: Pick<Message, "content" | "chatId" | "senderId"> & {
+  attachments: Pick<Media, "url" | "name" | "type">[];
+}) {
   return prisma.chat.update({
     data: {
       messages: {
         create: {
           content,
           senderId,
+          attachments: {
+            create: attachments,
+          },
         },
       },
       updatedAt: new Date(Date.now()),

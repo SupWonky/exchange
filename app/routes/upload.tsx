@@ -6,6 +6,7 @@ import {
 } from "@remix-run/node";
 import type { NodeOnDiskFile, ActionFunctionArgs } from "@remix-run/node";
 import { useFetcher } from "@remix-run/react";
+import { parseFileType } from "~/lib/utils";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await unstable_parseMultipartFormData(
@@ -29,7 +30,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     files: files.map((file) => ({
       name: file.name,
       url: `/media/${file.name}`,
-      type: file.type.startsWith("image") ? "IMAGE" : "MOVIE",
+      type: parseFileType(file.type),
     })),
   };
 };
@@ -49,15 +50,15 @@ export function useFileUpload(
     .filter((value: unknown): value is File => value instanceof File)
     .map((file) => {
       const name = file.name;
-      const type = file.type.startsWith("image") ? "IMAGE" : "MOVIE";
+      const type = parseFileType(file.type);
 
       const url = URL.createObjectURL(file);
       return { name, url, type };
     });
 
-  const images = (data?.files ?? [])
-    .concat(uploadingFiles ?? [])
-    .concat(defaultValue);
+  const files = data?.files ?? [];
+  // .concat(uploadingFiles ?? [])
+  // .concat(defaultValue);
 
   return {
     submit(files: FileList | null) {
@@ -72,7 +73,7 @@ export function useFileUpload(
       });
     },
     isUploading,
-    images,
+    files,
   };
 }
 

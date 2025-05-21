@@ -54,8 +54,11 @@ export const ModalRouter: React.FC<ModalRouterProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-lg" onCloseAutoFocus={onClose}>
-        <div className="flex items-center justify-between px-6 h-[var(--header-height)]">
+      <DialogContent
+        className="max-w-full sm:max-w-lg"
+        onCloseAutoFocus={onClose}
+      >
+        <div className="flex items-center justify-between px-4 sm:px-6 h-[var(--header-height)]">
           {canGoBack && (
             <button
               onClick={() => goBack()}
@@ -81,7 +84,7 @@ export const ModalRouter: React.FC<ModalRouterProps> = ({
               type: "spring",
               duration: 0.45,
             }}
-            className="px-6 pb-6 overflow-x-hidden overflow-y-auto flex-1"
+            className="px-4 sm:px-6 pb-6 overflow-x-hidden overflow-y-auto flex-1"
           >
             {Route}
           </motion.div>

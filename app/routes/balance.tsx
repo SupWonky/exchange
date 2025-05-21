@@ -5,7 +5,7 @@ import {
   redirect,
 } from "@remix-run/node";
 import { PopupSchema } from "~/constants/schemas";
-import { topupBalance } from "~/models/user.server";
+import { topupBalance } from "~/models/payment.server";
 import { getUser } from "~/session.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

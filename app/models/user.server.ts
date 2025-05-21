@@ -67,33 +67,6 @@ export async function verifyLogin(
   return userWithoutPassword;
 }
 
-export async function topupBalance({
-  userId,
-  amount,
-}: {
-  userId: User["id"];
-  amount: number;
-}) {
-  prisma.$transaction([
-    prisma.user.update({
-      data: { balance: { increment: amount } },
-      where: { id: userId },
-    }),
-    prisma.transaction.create({
-      data: {
-        type: "DEPOSIT",
-        amount: amount,
-        user: {
-          connect: {
-            id: userId,
-          },
-        },
-        status: "COMPLETED",
-      },
-    }),
-  ]);
-}
-
 export async function updateBlog({
   id,
   name,

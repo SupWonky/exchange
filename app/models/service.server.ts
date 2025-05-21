@@ -1,6 +1,4 @@
 import { Category, Media, Prisma, Service, User } from "@prisma/client";
-import { FilterObject } from "prisma/utils";
-
 import { prisma } from "~/db.server";
 import { formatSlug } from "~/lib/utils";
 

@@ -16,10 +16,11 @@ import { getCategoryTree } from "~/models/category.server";
 import { placeOrder } from "~/models/order.server";
 import { getPricing } from "~/models/pricing.server";
 import { getServiceBySlug } from "~/models/service.server";
-import { getUser } from "~/session.server";
+import { getUser, requireUser } from "~/session.server";
 import { getPricingVariantLabel } from "~/utils";
 import { SellerInfo } from "./seller-info";
 import { GuaranteeSection } from "./guarantee-section";
+import { FormEvent } from "react";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   invariant(params.slug, "Slug not found");
@@ -37,24 +38,22 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const user = await getUser(request);
-
-  if (!user) {
-    return redirect("/login");
-  }
+  const user = await requireUser(request);
 
   const formData = await request.formData();
   const pricingTierId = formData.get("pricingTierId")?.toString();
 
   if (!pricingTierId) return {};
   const pricingTier = await getPricing(pricingTierId);
+  if (user.id === pricingTier?.service.userId) return {};
 
   if (pricingTier) {
-    await placeOrder({
+    const order = await placeOrder({
       buyer: user,
       pricingTier,
       service: pricingTier.service,
     });
+    return redirect(`/track?id=${order.id}`);
   }
   return {};
 };
@@ -62,6 +61,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export default function ServicePage() {
   const { service, categoryTree, user } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
+
+  const handleOnSumbit = (e: FormEvent, price: number) => {
+    if (!user) {
+      e.preventDefault();
+      navigate("/login");
+      return;
+    }
+
+    if (user.balance < price) {
+      e.preventDefault();
+      navigate("?modal=balance");
+      return;
+    }
+  };
 
   return (
     <div>
@@ -145,23 +158,28 @@ export default function ServicePage() {
         <div className="max-w-2xl lg:max-w-xs w-full overflow-hidden space-y-6">
           <div className="bg-background border md:rounded-lg overflow-hidden">
             {service.pricingTier.length === 1 ? (
-              <Form>
+              <Form
+                method="post"
+                onSubmit={(e) =>
+                  handleOnSumbit(e, service.pricingTier[0].price)
+                }
+              >
                 <input
                   name="pricingTierId"
                   value={service.pricingTier[0].id}
                   type="hidden"
                 />
-                <div className="p-4">
+                <div className="p-4 space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-xl font-semibold text-green-600">
-                      3 000 ₽
+                      {service.pricingTier[0].price} ₽
                     </span>
                     <span className="text-base font-semibold">
                       Детали заказа
                     </span>
                   </div>
 
-                  <div className="mt-4 space-y-2">
+                  <div className="space-y-2">
                     <div className="flex items-center">
                       <Infinity className="h-4 w-4 mr-2" />
                       <span className="text-sm">
@@ -180,7 +198,7 @@ export default function ServicePage() {
                     </div>
                   </div>
 
-                  <div className="mt-4 space-y-2">
+                  <div className="space-y-2">
                     <div className="flex items-center">
                       <Check className="h-4 w-4 text-green-500 mr-2" />
                       <span className="text-sm">Высокое разрешение</span>
@@ -194,9 +212,13 @@ export default function ServicePage() {
                       <span className="text-sm">До 1 логотипа</span>
                     </div>
                   </div>
-                  <Button type="submit" size="lg" className="w-full mt-4">
-                    Заказать за {service.pricingTier[0].price} ₽
-                  </Button>
+                  {user && user.id === service.userId ? (
+                    <></>
+                  ) : (
+                    <Button type="submit" className="w-full">
+                      Заказать за {service.pricingTier[0].price} ₽
+                    </Button>
+                  )}
                 </div>
 
                 <div>
@@ -260,7 +282,7 @@ export default function ServicePage() {
                 </TabsList>
                 {service.pricingTier.map((item) => (
                   <TabsContent
-                    className="px-6 pb-4"
+                    className="px-6 pb-4 space-y-4"
                     key={item.id}
                     value={item.variant}
                   >
@@ -282,28 +304,20 @@ export default function ServicePage() {
                     </div>
                     <Form
                       method="post"
-                      onSubmit={(e) => {
-                        if (!user) {
-                          e.preventDefault();
-                          navigate("/login");
-                          return;
-                        }
-
-                        if (user.balance < item.price) {
-                          e.preventDefault();
-                          navigate("?rmodal=balance");
-                          return;
-                        }
-                      }}
+                      onSubmit={(e) => handleOnSumbit(e, item.price)}
                     >
                       <input
                         name="pricingTierId"
                         value={item.id}
                         type="hidden"
                       />
-                      <Button type="submit" className="w-full">
-                        Заказать за {item.price} ₽
-                      </Button>
+                      {user && user.id === service.userId ? (
+                        <></>
+                      ) : (
+                        <Button type="submit" className="w-full">
+                          Заказать за {item.price} ₽
+                        </Button>
+                      )}
                     </Form>
                   </TabsContent>
                 ))}

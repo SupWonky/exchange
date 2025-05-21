@@ -107,3 +107,7 @@ export function getPricingVariantLabel(variant: PricingVariant) {
       return "Бизнес";
   }
 }
+
+export function getRandomIndex(length: number) {
+  return Math.floor(Math.random() * length);
+}

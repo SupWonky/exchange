@@ -10,11 +10,9 @@ import { MediaUpload } from "~/components/media-upload";
 import { TextInput } from "~/components/text-input";
 import { Button } from "~/components/ui/button";
 import { CategoryNode, getCategoriesTree } from "~/models/category.server";
-import { useFileUpload } from "./upload";
 import { createService, getServiceById } from "~/models/service.server";
 import { getUser, getUserId } from "~/session.server";
 import { Textarea } from "~/components/ui/textarea";
-import { z } from "zod";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
 import {
   Card,
@@ -83,13 +81,6 @@ export default function CreateServicePage() {
       })),
     },
   });
-  const { images, submit } = useFileUpload(
-    service?.media?.map((m) => ({
-      name: m.name || "",
-      url: m.url,
-      type: m.type,
-    })) ?? []
-  );
 
   return (
     <div className="flex flex-1 justify-center items-start">
@@ -148,7 +139,10 @@ export default function CreateServicePage() {
             </div>
 
             <div>
-              <MediaUpload submit={submit} defualtValue={service?.media} />
+              <MediaUpload
+                name={fields.media.name}
+                defualtValue={service?.media}
+              />
 
               {fields.media.errors && (
                 <div className="p-1 text-sm text-destructive">
@@ -156,13 +150,6 @@ export default function CreateServicePage() {
                 </div>
               )}
             </div>
-
-            <input
-              name={fields.media.name}
-              type="hidden"
-              className="hidden"
-              value={JSON.stringify(images)}
-            />
 
             <Button>Далее</Button>
           </Form>

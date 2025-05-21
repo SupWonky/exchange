@@ -88,7 +88,7 @@ export async function getCategoryWithChildren({
 }: {
   slug: Category["slug"];
 }) {
-  return prisma.category.findUnique({
+  return prisma.category.findFirst({
     where: {
       slug,
     },

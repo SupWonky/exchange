@@ -53,7 +53,9 @@ export default function CategoryPage() {
   if (!category.parent) {
     return (
       <div className="container mx-auto px-4 py-6">
-        <h1 className="mb-6 text-3xl font-semibold">{category.name}</h1>
+        <h1 className="mb-6 text-2xl lg:text-3xl font-semibold">
+          {category.name}
+        </h1>
         {category.children && category.children.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {category.children.map((category) => (
@@ -133,9 +135,7 @@ export default function CategoryPage() {
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex flex-row justify-between items-center mb-6">
-        <h1 className="text-xl md:text-2xl lg:text-3xl font-semibold">
-          {category.name}
-        </h1>
+        <h1 className="text-2xl lg:text-3xl font-semibold">{category.name}</h1>
         <CategoryBreadcrumbs
           className="hidden lg:block"
           categoryTree={categoryTree}

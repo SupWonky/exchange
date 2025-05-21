@@ -57,6 +57,22 @@ const ServiceSchema = z.object({
 const MessageSchema = z.object({
   content: z.string({ message: "Введите сообщение" }),
   chatId: z.string({ message: "Ошибка, не указан чат" }),
+  attachments: z.preprocess(
+    (val) => {
+      try {
+        return typeof val === "string" ? JSON.parse(val) : val;
+      } catch {
+        return val;
+      }
+    },
+    z.array(
+      z.object({
+        name: z.string(),
+        url: z.string(),
+        type: z.enum(["MOVIE", "IMAGE", "OTHER"]),
+      })
+    )
+  ),
 });
 
 const PopupSchema = z.object({

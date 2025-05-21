@@ -314,7 +314,16 @@ export async function getOrder(id: Order["id"]) {
       seller: true,
       chat: {
         include: {
-          messages: true,
+          messages: {
+            include: {
+              sender: {
+                include: {
+                  avatar: true,
+                },
+              },
+              attachments: true,
+            },
+          },
         },
       },
     },

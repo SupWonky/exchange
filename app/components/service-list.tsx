@@ -112,7 +112,7 @@ function ServiceCard({ service }: { service: ServiceType }) {
   const image = service.media.at(0);
 
   return (
-    <Card className="group overflow-hidden hover:shadow-lg rounded-lg">
+    <Card className="group overflow-hidden transition-shadow hover:shadow-lg rounded-lg">
       <div className="relative">
         <Link
           to={`/services/${service.slug}`}

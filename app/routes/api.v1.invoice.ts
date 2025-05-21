@@ -1,10 +1,13 @@
 import { parseWithZod } from "@conform-to/zod";
 import { ActionFunctionArgs, redirect } from "@remix-run/node";
 import { PopupSchema } from "~/constants/schemas";
+import { generateSign } from "~/lib/lava.server";
+import { createTransaction } from "~/models/payment.server";
 import { requireUserId } from "~/session.server";
+import axios from "axios";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await requireUserId(request);
+  const userId = await requireUserId(request);
   const formData = await request.formData();
   const submission = parseWithZod(formData, { schema: PopupSchema });
 
@@ -14,30 +17,38 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { amount } = submission.value;
 
-  const body = {
-    auth_login: process.env.PAYMENT_AUTH_LOGIN!,
-    auth_secret: process.env.PAYMENT_AUTH_SECRET!,
+  const transaction = await createTransaction({
     amount,
-    type: "purchase",
-    lifetime: 60,
-    //amount_currency: "RUB",
+    status: "PENDING",
+    userId,
+    type: "DEPOSIT",
+    reference: null,
+  });
+
+  const data = {
+    wallet_to: process.env.LAVA_WALLET!,
+    sum: amount,
+    order_id: transaction.id,
   };
 
-  console.log(body);
+  const params = new URLSearchParams();
+  const headers = {
+    "Content-Type": "multipart/form-data",
+    Authorization: process.env.LAVA_API_KEY!,
+  };
 
-  const res = await fetch("https://api.crystalpay.io/v3/invoice/create", {
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-    method: "post",
+  for (const [key, value] of Object.entries(data)) {
+    params.append(key, value.toString());
+  }
+
+  const response = await axios.get("https://api.lava.ru/wallet/list", {
+    headers,
   });
-  const data = await res.json();
 
-  if (data.error) {
-    console.log(data);
+  console.log(headers, response.data);
+  if (response.data.status === "error") {
     throw new Response("Internal Error", { status: 500 });
   }
 
-  redirect(data.url);
+  redirect(response.data.url);
 };
