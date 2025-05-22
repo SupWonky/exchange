@@ -277,6 +277,7 @@ async function getCategories() {
     args: [`--proxy-server=http://${proxy}`],
   });
   const page = await browser.newPage();
+  await new Promise((resolve) => setTimeout(resolve, 50000))
   await page.goto("https://kwork.ru/categories", { waitUntil: "networkidle0" });
 
   // Extract category data directly in browser context

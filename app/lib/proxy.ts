@@ -3,74 +3,65 @@ import { proxies } from "~/constants";
 import { singleton } from "~/singleton.server";
 
 const RETRY = 100;
-const VALID_PROXIES = singleton("proxies", getProxyList);
 
-console.log(VALID_PROXIES);
+// 1. async getProxyList that waits for every check
+async function getProxyList(): Promise<string[]> {
+  const checks = await Promise.all(
+    proxies.map(async (proxyUrl) => {
+      try {
+        const ok = await checkAnonymity(proxyUrl);
+        return ok ? proxyUrl : null;
+      } catch {
+        return null;
+      }
+    })
+  );
+  return checks.filter((p): p is string => !!p);
+}
+
+// 2. cache it via your singleton (which now returns a Promise<string[]>)
+const VALID_PROXIES_P = singleton("proxies", getProxyList);
 
 async function checkAnonymity(proxyUrl: string, timeout = 3000) {
   const [host, port] = proxyUrl.split(":");
-  const options = { host, port, path: "https://www.google.com" };
+  const options: http.RequestOptions = {
+    host,
+    port: Number(port),
+    path: "https://www.google.com/",    // absolute URL for HTTP proxy
+    method: "GET",
+    headers: { Host: "www.google.com" }, // ensure Host header is set
+  };
 
-  return new Promise((resolve, reject) => {
-    const req = http.get(options, (res) => {
-      // console.log("get");
-      // let data = "";
-      // res.on("data", (chunk) => (data += chunk));
-      // res.on("end", () => {
-      //   const headers = JSON.parse(data).headers;
-      //   const leaked = headers["X-Forwarded-For"] || headers.Via;
-      //   resolve(!leaked);
-      // });
-
-      const headers = res.headers;
-      const leaked = headers["X-Forwarded-For"] || headers.Via;
+  return new Promise<boolean>((resolve, reject) => {
+    const req = http.request(options, (res) => {
+      const leaked =
+        res.headers["x-forwarded-for"] || res.headers.via;
       resolve(!leaked);
     });
 
-    req.setTimeout(timeout, () => {
-      req.destroy(new Error("Request timed out"));
-    });
-
+    req.setTimeout(timeout, () =>
+      req.destroy(new Error("Proxy timed out"))
+    );
     req.on("error", (err) => reject(err));
+    req.end();
   });
 }
 
 export async function getProxy(): Promise<string | undefined> {
-  console.log(VALID_PROXIES.length);
-  let proxy = undefined;
-  let idx = Math.floor(Math.random() * VALID_PROXIES.length);
+  const VALID_PROXIES = await VALID_PROXIES_P;
   let attempt = 0;
+  let idx = Math.floor(Math.random() * VALID_PROXIES.length);
 
-  while (proxy === undefined && attempt < RETRY) {
+  while (attempt++ < RETRY) {
+    const candidate = VALID_PROXIES[idx];
     try {
-      const result = await checkAnonymity(VALID_PROXIES[idx]);
-      if (result) {
-        proxy = VALID_PROXIES[idx];
-        break;
+      if (await checkAnonymity(candidate)) {
+        return candidate;
       }
-    } catch (e) {
-      console.log("Proxy error: " + e);
+    } catch {
+      /* ignore and try next */
     }
-
     idx = (idx + 1) % VALID_PROXIES.length;
-    attempt++;
   }
-
-  return proxy;
-}
-
-export function getProxyList(): string[] {
-  const proxyList: string[] = [];
-
-  for (const proxy of proxies) {
-    checkAnonymity(proxy)
-      .then((result) => {
-        if (result) {
-          proxyList.push(proxy);
-        }
-      })
-      .catch(() => {});
-  }
-
-  return proxyList;
+  return undefined;
 }
