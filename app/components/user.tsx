@@ -2,7 +2,7 @@ import { Form, Link, NavLink, useFetcher } from "@remix-run/react";
 
 import { useOptionalPrefs, useOptionalUser } from "~/utils";
 
-import { Avatar, AvatarFallback } from "./ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -19,12 +19,12 @@ const links = {
   seller: [
     { url: "/services", label: "Услуги" },
     { url: "/orders", label: "Заказы" },
-    { url: "/exchange", label: "Биржа" },
+    //{ url: "/exchange", label: "Биржа" },
     { url: "/inbox", label: "Чат" },
   ],
   buyer: [
     { url: "/orders", label: "Заказы" },
-    { url: "/projects", label: "Проекты" },
+    //{ url: "/projects", label: "Проекты" },
     { url: "/inbox", label: "Чат" },
   ],
 };
@@ -81,8 +81,9 @@ export function User() {
               type="button"
             >
               <Avatar className="h-9 w-9 border-2 border-indigo-100">
+                <AvatarImage src={user.avatar?.url} />
                 <AvatarFallback className="bg-indigo-50 text-indigo-700">
-                  {user.email.charAt(0).toUpperCase()}
+                  {user.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
             </button>
@@ -119,7 +120,9 @@ export function User() {
               </button>
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Профиль</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to={`/user/${user.id}`}>Профиль</Link>
+            </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/settings">Настройки</Link>
             </DropdownMenuItem>

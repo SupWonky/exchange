@@ -6,7 +6,10 @@ import { prisma } from "~/db.server";
 export type { User } from "@prisma/client";
 
 export async function getUserById(id: User["id"]) {
-  return prisma.user.findUnique({ where: { id } });
+  return prisma.user.findUnique({
+    where: { id },
+    include: { avatar: true, userInfo: true },
+  });
 }
 
 export async function getUserByEmail(email: User["email"]) {
@@ -70,10 +73,10 @@ export async function verifyLogin(
 export async function updateBlog({
   id,
   name,
-  description,
-}: Pick<User, "id" | "name" | "description">) {
+  bio,
+}: Pick<User, "id" | "name" | "bio">) {
   return prisma.user.update({
-    data: { name, description },
+    data: { name, bio },
     where: { id: id },
   });
 }

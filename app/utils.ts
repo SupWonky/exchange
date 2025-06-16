@@ -1,4 +1,4 @@
-import { PricingVariant } from "@prisma/client";
+import { Media, PricingVariant } from "@prisma/client";
 import { useMatches } from "@remix-run/react";
 import { useMemo } from "react";
 
@@ -46,12 +46,17 @@ export function useMatchesData(
   return route?.data as Record<string, unknown>;
 }
 
-function isUser(user: unknown): user is User {
+type UserType = User & {
+  avatar: Media | null;
+};
+
+function isUser(user: unknown): user is UserType {
   return (
     user != null &&
     typeof user === "object" &&
     "email" in user &&
-    typeof user.email === "string"
+    typeof user.email === "string" &&
+    "avatar" in user
   );
 }
 
@@ -59,7 +64,7 @@ function isUserPrefs(prefs: unknown): prefs is UserPrefs {
   return prefs != null && typeof prefs === "object" && "role" in prefs;
 }
 
-export function useOptionalUser(): User | undefined {
+export function useOptionalUser(): UserType | undefined {
   const data = useMatchesData("root");
   if (!data || !isUser(data.user)) {
     return undefined;
@@ -75,7 +80,7 @@ export function useOptionalPrefs(): UserPrefs | undefined {
   return data.prefs;
 }
 
-export function useUser(): User {
+export function useUser(): UserType {
   const maybeUser = useOptionalUser();
   if (!maybeUser) {
     throw new Error(
@@ -110,4 +115,16 @@ export function getPricingVariantLabel(variant: PricingVariant) {
 
 export function getRandomIndex(length: number) {
   return Math.floor(Math.random() * length);
+}
+
+export function formatRating(
+  reviewCount?: number,
+  postiveReviewCount?: number,
+  mult = 5
+) {
+  if (!reviewCount || reviewCount <= 0 || !postiveReviewCount) {
+    return "0";
+  }
+
+  return ((postiveReviewCount / reviewCount) * mult || 0).toFixed(1);
 }

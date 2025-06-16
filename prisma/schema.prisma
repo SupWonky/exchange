@@ -1,10 +1,233 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres", "views"]
+}
+
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
+model Media {
+  id         String     @id @default(cuid(2))
+  name       String?
+  url        String
+  type       MediaType
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  categoires Category[]
+  users      User[]
+  messages   Message[]  @relation("MediaToMessage")
+  services   Service[]  @relation("MediaToService")
+}
+
+model User {
+  id              String          @id @default(cuid(2))
+  email           String          @unique
+  name            String          @default("placeholder")
+  description     String?
+  balance         Int             @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
+  avatarId        String?
+  skills          String[]
+  role            String?
+  averageRating   Float           @default(0)
+  bio             String?
+  completionRate  Float           @default(0)
+  ordersCompleted Int             @default(0)
+  repeatBuyers    Float           @default(0)
+  verified        Boolean         @default(false)
+  ordersCount     Int             @default(0)
+  reviewsCount    Int             @default(0)
+  escrows         EscrowAccount[]
+  messages        Message[]
+  buyerOrders     Order[]         @relation("BuyerOrders")
+  sellerOrders    Order[]         @relation("SellerOrders")
+  password        Password?
+  reviews         Review[]
+  services        Service[]
+  transactions    Transaction[]
+  avatar          Media?          @relation(fields: [avatarId], references: [id], onDelete: Cascade)
+  chats           Chat[]          @relation("ChatToUser")
+  userInfo        UserInfo?
+}
+
+model Chat {
+  id           String    @id @default(cuid(2))
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  messages     Message[]
+  order        Order?
+  participants User[]    @relation("ChatToUser")
+}
+
+model Message {
+  id              String   @id @default(cuid(2))
+  content         String
+  createdAt       DateTime @default(now())
+  read            Boolean  @default(false)
+  isSystemMessage Boolean  @default(false)
+  senderId        String
+  chatId          String
+  chat            Chat     @relation(fields: [chatId], references: [id])
+  sender          User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  attachments     Media[]  @relation("MediaToMessage")
+}
+
+model Password {
+  hash   String
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Service {
+  id            String        @id @default(cuid(2))
+  title         String
+  slug          String
+  description   String?
+  requiredInfo  String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+  views         Int           @default(0)
+  status        Status        @default(DRAFT)
+  userId        String
+  categoryId    String
+  pricingTier   PricingTier[]
+  reviews       Review[]
+  category      Category      @relation(fields: [categoryId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
+  media         Media[]       @relation("MediaToService")
+  serviceInfo   ServiceInfo?
+}
+
+model PricingTier {
+  id          String              @id @default(cuid(2))
+  variant     PricingVariant      @default(BASIC)
+  price       Int
+  duration    Int
+  volume      String
+  description String?
+  serviceId   String
+  orders      Order[]
+  service     Service             @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  options     PricingTierOption[]
+
+  @@unique([variant, serviceId])
+}
+
+model PricingTierOption {
+  name          String
+  type          OptionType
+  stringValue   String?
+  booleanValue  Boolean?
+  pricingTierId String
+  pricingTier   PricingTier @relation(fields: [pricingTierId], references: [id], onDelete: Cascade)
+
+  @@unique([name, pricingTierId])
+}
+
+model Transaction {
+  id              String            @id @default(cuid(2))
+  amount          Int
+  type            TransactionType
+  status          TransactionStatus @default(PENDING)
+  reference       String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  userId          String
+  orderId         String?
+  escrowAccountId String?
+  escrowFee       Int?
+  releaseDueDate  DateTime?
+  disputeReason   String?
+  escrowAccount   EscrowAccount?    @relation(fields: [escrowAccountId], references: [id])
+  order           Order?            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EscrowAccount {
+  id              String        @id @default(cuid(2))
+  balance         Int           @default(0)
+  status          EscrowStatus  @default(HELD)
+  releaseDueDate  DateTime?
+  disputeDeadline DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  orderId         String        @unique
+  userId          String
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions    Transaction[]
+}
+
+model Order {
+  id            String         @id @default(cuid(2))
+  status        OrderStatus
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  pricingTierId String?
+  buyerId       String
+  sellerId      String
+  chatId        String?        @unique
+  escrowAccount EscrowAccount?
+  buyer         User           @relation("BuyerOrders", fields: [buyerId], references: [id], onDelete: Cascade)
+  chat          Chat?          @relation(fields: [chatId], references: [id])
+  pricingTier   PricingTier?   @relation(fields: [pricingTierId], references: [id])
+  seller        User           @relation("SellerOrders", fields: [sellerId], references: [id], onDelete: Cascade)
+  transactions  Transaction[]
+}
+
+model Review {
+  id        String   @id @default(cuid(2))
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  serviceId String
+  recommend Boolean
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id        String     @id @default(cuid(2))
+  name      String
+  slug      String     @unique
+  path      String
+  url       String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  parentId  String?
+  imageId   String?
+  image     Media?     @relation(fields: [imageId], references: [id])
+  parent    Category?  @relation("ChildrenCategories", fields: [parentId], references: [id])
+  children  Category[] @relation("ChildrenCategories")
+  services  Service[]
+}
+
+view ServiceInfo {
+  id           String
+  serviceId    String  @unique
+  title        String?
+  description  String?
+  requiredInfo String?
+  reviewCount  BigInt
+  service      Service @relation(fields: [serviceId], references: [id])
+}
+
+view UserInfo {
+  userId           String  @unique
+  reviewCount      Int
+  reviewPositive   Int
+  reviewNegative   Int
+  orderQueue       Int
+  orderCompleted   Int
+  orderCanceled    Int
+  repeatBuyerRatio Float
+  user             User    @relation(fields: [userId], references: [id])
 }
 
 enum MediaType {
@@ -38,12 +261,10 @@ enum OrderStatus {
 }
 
 enum TransactionType {
-  // Escrow types
-  ESCROW_HOLD     // Funds held in escrow
-  ESCROW_RELEASE  // Funds released to provider
-  ESCROW_REFUND   // Funds returned to buyer
-  ESCROW_FEE      // Platform fee deduction
-  // Non-escrow types
+  ESCROW_HOLD
+  ESCROW_RELEASE
+  ESCROW_REFUND
+  ESCROW_FEE
   DEPOSIT
   WITHDRAWAL
 }
@@ -60,226 +281,4 @@ enum TransactionStatus {
   COMPLETED
   FAILED
   CANCELLED
-}
-
-model Media {
-  id        String    @id @default(cuid(2))
-  name      String?
-  url       String // URL or file path to the media file
-  type      MediaType // Type of media (IMAGE, VIDEO, etc.)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  users      User[]
-  services   Service[]
-  categoires Category[]
-  messages   Message[]
-}
-
-model User {
-  id        String    @id @default(cuid(2))
-  email     String    @unique
-  name      String    @default("placeholder")
-  description String?
-  balance   Int       @default(0)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime? // Soft deletion flag
-
-  avatar   Media?  @relation(fields: [avatarId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  avatarId String?
-
-  password Password?
-  services Service[]
-  reviews  Review[]
-  transactions Transaction[]
-  escrows     EscrowAccount[]
-  messages  Message[]
-  chats Chat[]
-  buyerOrders   Order[] @relation("BuyerOrders")
-  sellerOrders  Order[] @relation("SellerOrders")
-}
-
-model Chat {
-  id        String      @id @default(cuid(2))
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-
-  messages  Message[]
-  participants User[]     
-  order    Order?
-}
-
-model Message {
-  id        String   @id @default(cuid(2))
-  content   String
-  createdAt DateTime     @default(now())
-  read      Boolean   @default(false)
-  isSystemMessage Boolean @default(false)
-
-  sender    User    @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  senderId  String
-
-  chat  Chat @relation(fields: [chatId], references: [id])
-  chatId String
-
-  attachments Media[]
-}
-
-model Password {
-  hash   String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String @unique
-}
-
-model Service {
-  id            String    @id @default(cuid(2))
-  title         String
-  slug          String
-  description   String?
-  requiredInfo  String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
-  averageRating Float     @default(0.0)
-  totalReviews  Int       @default(0)
-  status        Status    @default(DRAFT)
-
-  user   User   @relation(fields: [userId], references: [id])
-  userId String
-
-  category   Category @relation(fields: [categoryId], references: [id], onUpdate: Cascade)
-  categoryId String
-
-  media       Media[]
-  reviews     Review[]
-  pricingTier PricingTier[]
-}
-
-model PricingTier {
-  id          String         @id @default(cuid(2))
-  variant     PricingVariant @default(BASIC)
-  price       Int
-  duration    Int
-  volume      String
-  description String?
-
-  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  serviceId String
-
-  options PricingTierOption[]
-  orders  Order[]
-
-  @@unique([variant, serviceId])
-}
-
-model PricingTierOption {
-  name         String
-  type         OptionType
-  stringValue  String?
-  booleanValue Boolean?
-
-  pricingTier   PricingTier @relation(fields: [pricingTierId], references: [id], onDelete: Cascade)
-  pricingTierId String
-
-  @@unique([name, pricingTierId])
-}
-
-model Transaction {
-  id           String           @id @default(cuid(2))
-  amount       Int              // Transaction value in smallest unit (e.g. cents)
-  type         TransactionType
-  status       TransactionStatus @default(PENDING)
-  reference    String?           // External payment reference
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-
-  // Relationships
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  order     Order?  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId   String? // 💡 Removed @unique to allow multiple transactions per order
-  escrowAccount EscrowAccount? @relation(fields: [escrowAccountId], references: [id]) // 💡 New relation
-  escrowAccountId String? 
-
-  escrowFee      Int?     
-  releaseDueDate DateTime? 
-  disputeReason  String?
-}
-
-model EscrowAccount {
-  id        String   @id @default(cuid(2))
-  balance   Int      @default(0)
-  status    EscrowStatus @default(HELD) // 💡 Added state management
-  releaseDueDate DateTime? 
-  disputeDeadline DateTime? // 💡 Added dispute window
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relationships
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId   String   @unique
-  
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-
-  transactions Transaction[] // 💡 Explicit relationship
-}
-
-model Order {
-  id        String      @id @default(cuid(2))
-  status    OrderStatus
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-
-  pricingTier   PricingTier? @relation(fields: [pricingTierId], references: [id])
-  pricingTierId String?
-
-  buyerId  String
-  sellerId String
-  buyer    User  @relation("BuyerOrders", fields: [buyerId], references: [id], onDelete: Cascade)
-  seller   User  @relation("SellerOrders", fields: [sellerId], references: [id], onDelete: Cascade)
-
-  chat      Chat?  @relation(fields: [chatId], references: [id])
-  chatId    String?  @unique
-
-  transactions Transaction[] // 💡 Changed from single to multiple
-  escrowAccount EscrowAccount? // 💡 Changed to 1:1 relationship
-  //@@unique([buyerId, sellerId])
-}
-
-model Review {
-  id      String  @id @default(cuid(2))
-  rating  Boolean
-  comment String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Reviews are cascaded if the user or service is deleted.
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String
-
-  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  serviceId String
-}
-
-model Category {
-  id   String @id @default(cuid(2))
-  name String
-  slug String @unique
-  path String
-  url  String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  parentId String?
-  parent   Category? @relation("ChildrenCategories", fields: [parentId], references: [id])
-
-  image    Media?    @relation(fields: [imageId], references: [id])
-  imageId  String?   
-
-  services Service[]
-  children Category[] @relation("ChildrenCategories")
 }

@@ -7,14 +7,14 @@ export default {
     extend: {
       fontFamily: {
         sans: [
-          "Inter",
-          "ui-sans-serif",
+          "Roboto",
           "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "Roboto",
+          "Ubuntu",
+          "Cantarell",
           "sans-serif",
-          "Apple Color Emoji",
-          "Segoe UI Emoji",
-          "Segoe UI Symbol",
-          "Noto Color Emoji",
         ],
       },
       borderRadius: {

@@ -19,7 +19,7 @@ export function GuaranteeSection() {
   }, []);
 
   return (
-    <div className="bg-card border rounded-lg mb-6 p-4">
+    <div className="bg-card border md:rounded-lg mb-6 p-4">
       <div className="flex">
         <div className="mr-3">
           <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center">

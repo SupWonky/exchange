@@ -1,5 +1,5 @@
 import { parseWithZod } from "@conform-to/zod";
-import { OrderStatus } from "@prisma/client";
+import { Media, OrderStatus, User } from "@prisma/client";
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -15,11 +15,11 @@ import {
   Clock,
   Package,
   RotateCcw,
-  User,
+  UserIcon,
   XCircle,
 } from "lucide-react";
 import { TrackAction } from "~/constants/schemas";
-import { formatDate, formatTime } from "~/lib/utils";
+import { formatDate } from "~/lib/utils";
 import { createMessage } from "~/models/chat.server";
 import { getOrder, updateOrderStatus } from "~/models/order.server";
 import { getUser, requireUserId } from "~/session.server";
@@ -380,7 +380,13 @@ const InfoItem = ({
   </div>
 );
 
-const ParticipantAvatar = ({ user, role }: { user: any; role: string }) => (
+const ParticipantAvatar = ({
+  user,
+  role,
+}: {
+  user: User & { avatar: Media | null };
+  role: string;
+}) => (
   <div className="flex items-center gap-3">
     <div
       className={`w-10 h-10 rounded-full flex items-center justify-center 
@@ -392,10 +398,10 @@ const ParticipantAvatar = ({ user, role }: { user: any; role: string }) => (
         <img
           src={user.avatar.url}
           alt={user.name || role}
-          className="w-full h-full rounded-full object-cover"
+          className="size-10 rounded-full object-cover"
         />
       ) : (
-        <User
+        <UserIcon
           size={16}
           className={`${
             role === "исполнитель" ? "text-green-500" : "text-blue-500"

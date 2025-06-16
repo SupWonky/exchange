@@ -1,20 +1,61 @@
-import { LoaderFunctionArgs } from "@remix-run/node";
+import { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { getServiceListItems } from "~/models/service.server";
 import { ServiceList } from "~/components/service-list";
 import { ConfigurableFilter, FilterSectionType } from "~/components/filters";
+import { siteConfig } from "~/config/site";
+import { SortFilter } from "~/components/sort-filter";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const searchParams = new URL(request.url).searchParams;
   const query = searchParams.get("q") || undefined;
+  const [minPrice, maxPrice] = searchParams.get("price")?.split("_") ?? [];
+  const minReviews = Number(searchParams.get("sminreviews") ?? 0);
+  const sortSlug = searchParams.get("sort") ?? undefined;
 
-  const services = await getServiceListItems({ query: query });
+  const [items, totalCount] = await getServiceListItems({
+    query: query,
+    filters: {
+      service: {
+        pricingTier: {
+          some: {
+            price: {
+              ...(minPrice ? { gte: Number(minPrice) } : {}),
+              ...(maxPrice ? { lte: Number(maxPrice) } : {}),
+            },
+          },
+        },
+      },
+      reviewCount: { gte: minReviews },
+    },
+    sortSlug,
+  });
 
-  return { services, query };
+  return { services: items.map((item) => item.service), query, totalCount };
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [
+    {
+      title: `Результаты поиска по запросу «${data?.query}» - ${siteConfig.name}`,
+    },
+    {
+      name: "description",
+      content: `Результаты поиска по запросу «${data?.query}» - Больше чем биржа фриланса`,
+    },
+    {
+      name: "og:title",
+      content: `Результаты поиска по запросу «${data?.query}» - ${siteConfig.name}`,
+    },
+    {
+      name: "og:description",
+      content: `Результаты поиска по запросу «${data?.query}» - Больше чем биржа фриланса`,
+    },
+  ];
 };
 
 export default function SearchPage() {
-  const { services, query } = useLoaderData<typeof loader>();
+  const { services, query, totalCount } = useLoaderData<typeof loader>();
 
   const filterConfig: FilterSectionType[] = [
     {
@@ -48,6 +89,18 @@ export default function SearchPage() {
       minPlaceholder: "От руб.",
       maxPlaceholder: "До руб.",
     },
+    {
+      id: "sminreviews",
+      title: "Положительных отзывов",
+      type: "radio",
+      paramName: "sminreviews",
+      options: [
+        { label: "От 1", value: "1" },
+        { label: "От 5", value: "5" },
+        { label: "От 20", value: "20" },
+        { label: "От 100", value: "100" },
+      ],
+    },
   ];
 
   return (
@@ -56,6 +109,14 @@ export default function SearchPage() {
         <h1 className="text-3xl font-semibold">
           {query ? `Заказать «${query}»` : "Все услуги"}
         </h1>
+      </div>
+
+      <div className="flex flex-row justify-between items-center mb-4">
+        <div className="text-sm text-muted-foreground">
+          {totalCount} результатов
+        </div>
+
+        <SortFilter />
       </div>
 
       <div className="grid lg:grid-cols-[280px_1fr] gap-6">

@@ -1,5 +1,6 @@
 import { Category, Media, Prisma, Service, User } from "@prisma/client";
 import { prisma } from "~/db.server";
+import { SortFilterItem, sorting } from "~/lib/constants";
 import { formatSlug } from "~/lib/utils";
 
 export async function getServiceListByUser({
@@ -22,34 +23,71 @@ export async function getServiceListItems({
   cursor,
   categoryId,
   query,
+  filters,
+  sortSlug,
 }: {
   cursor?: string;
   categoryId?: Category["id"];
   query?: string;
+  filters?: Prisma.ServiceInfoWhereInput;
+  sortSlug?: string;
 }) {
-  const filters = {
-    ...(categoryId
-      ? { category: { path: { startsWith: `%${categoryId}` } } }
-      : {}),
-    ...(query
-      ? {
-          OR: [
-            { title: { contains: query } },
-            { description: { contains: query } },
-          ],
-        }
-      : {}),
-  };
+  const andFilters: Prisma.ServiceInfoWhereInput[] = [];
+  let orderBy: Prisma.ServiceInfoOrderByWithRelationInput = {};
 
-  return prisma.service.findMany({
-    include: { media: true, user: true, pricingTier: true },
-    where: filters,
-    take: 6,
-    orderBy: {
-      id: "asc",
-    },
-    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-  });
+  if (categoryId) {
+    andFilters.push({
+      service: {
+        category: {
+          path: { startsWith: `%${categoryId}` },
+        },
+      },
+    });
+  }
+
+  if (filters) {
+    andFilters.push(filters);
+  }
+
+  if (query) {
+    orderBy._relevance = {
+      fields: ["title", "description", "requiredInfo"],
+      search: query,
+      sort: "desc",
+    };
+  } else {
+    const sort = sorting.find((item) => item.slug === sortSlug);
+
+    switch (sort?.sort_key) {
+      case "LATEST":
+        orderBy = { service: { createdAt: "desc" } };
+        break;
+      default:
+        orderBy = { service: { views: "desc" } };
+        break;
+    }
+  }
+
+  return Promise.all([
+    prisma.serviceInfo.findMany({
+      include: {
+        service: {
+          include: {
+            media: true,
+            user: { include: { userInfo: true, avatar: true } },
+            pricingTier: { where: { variant: "BASIC" } },
+          },
+        },
+      },
+      where: { AND: andFilters },
+      take: 6,
+      orderBy,
+      ...(cursor ? { cursor: { serviceId: cursor }, skip: 1 } : {}),
+    }),
+    prisma.serviceInfo.count({
+      where: { AND: andFilters },
+    }),
+  ]);
 }
 
 export async function createService({
@@ -132,37 +170,12 @@ export async function updateServiceStatus({
   });
 }
 
-export async function getServiceItemsByCategory({
-  categoryId,
-  filters,
-}: {
-  categoryId: Category["id"];
-  filters?: Prisma.ServiceWhereInput;
-}) {
-  const where: Prisma.ServiceWhereInput = {
-    AND: [
-      { category: { path: { startsWith: `%${categoryId}` } } },
-      { ...filters },
-    ],
-  };
-
-  return prisma.service.findMany({
-    where: where,
-    include: {
-      media: true,
-      user: true,
-      pricingTier: { where: { variant: "BASIC" } },
-    },
-    take: 6,
-  });
-}
-
-export async function getServiceBySlug({ slug }: { slug: Service["slug"] }) {
+export async function getServiceBySlug(slug: Service["slug"]) {
   return prisma.service.findFirst({
     where: { slug },
     include: {
       reviews: true,
-      user: true,
+      user: { include: { userInfo: true, avatar: true } },
       media: true,
       category: true,
       pricingTier: {
@@ -174,7 +187,7 @@ export async function getServiceBySlug({ slug }: { slug: Service["slug"] }) {
   });
 }
 
-export async function getServiceById({ id }: { id: Service["id"] }) {
+export async function getServiceById(id: Service["id"]) {
   return prisma.service.findFirst({
     where: { id },
     include: {
@@ -189,10 +202,19 @@ export async function getServiceById({ id }: { id: Service["id"] }) {
   });
 }
 
-export async function deleteService({ id }: { id: Service["id"] }) {
+export async function deleteService(id: Service["id"]) {
   return prisma.service.delete({
     where: {
       id,
+    },
+  });
+}
+
+export async function viewService(id: Service["id"]) {
+  return prisma.service.update({
+    where: { id },
+    data: {
+      views: { increment: 1 },
     },
   });
 }

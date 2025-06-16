@@ -1,6 +1,7 @@
 import { LoaderFunctionArgs, redirect } from "@remix-run/node";
 import { NavLink, Outlet, useLoaderData, useLocation } from "@remix-run/react";
 import { MessageCircle } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { cn, formatRelativeTime } from "~/lib/utils";
 import { getChatsByUser } from "~/models/chat.server";
 import { requireUserId } from "~/session.server";
@@ -54,11 +55,12 @@ export default function InboxLayout() {
                       }
                     >
                       <div className="relative">
-                        <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                          <span className="text-lg">👤</span>
-                        </div>
-                        {/* Online status indicator */}
-                        <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background bg-green-500" />
+                        <Avatar className="h-12 w-12 border">
+                          <AvatarImage src={participant?.avatar?.url} />
+                          <AvatarFallback>
+                            {participant?.name.at(0)?.toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
                       </div>
 
                       <div className="flex-1 min-w-0">

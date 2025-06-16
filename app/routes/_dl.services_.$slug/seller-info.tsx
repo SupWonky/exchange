@@ -16,28 +16,36 @@ import { Separator } from "~/components/ui/separator";
 import { ConversationSchema } from "~/constants/schemas";
 
 type SellerInfoProps = {
+  id: string;
   name: string;
   reciverId: string;
+  avgRating: string;
+  positiveReviews: number;
+  negativeReviews: number;
+  orderCompleted: number;
+  orderQueue: number;
+  avatar: {
+    url: string;
+  } | null;
 };
 
-export function SellerInfo({ name, reciverId }: SellerInfoProps) {
-  const seller = {
-    fullName: "Андрей",
-    level: "Бывалый фрилансер плюс",
-    role: "Дизайн",
-    rating: 5.0,
-    completedOrders: 2984,
-    positiveReviews: 1101,
-    negativeReviews: 3,
-    ordersInProgress: 1,
-  };
-
+export function SellerInfo({
+  id,
+  name,
+  reciverId,
+  avgRating,
+  positiveReviews,
+  negativeReviews,
+  orderCompleted,
+  orderQueue,
+  avatar,
+}: SellerInfoProps) {
   return (
-    <div className="bg-card border rounded-lg mb-6 p-4 md:rounded-lg">
+    <div className="bg-card border mb-6 p-4 md:rounded-lg">
       <div className="flex">
-        <Link to={`/user/${name}`} className="shrink-0 mr-3">
+        <Link to={`/user/${id}`} className="shrink-0 mr-3">
           <Avatar className="h-14 w-14 border">
-            <AvatarImage src="https://github.com/shadcn.png" />
+            <AvatarImage src={avatar?.url} />
             <AvatarFallback className="bg-primary/10">
               {name.at(0)?.toUpperCase()}
             </AvatarFallback>
@@ -45,17 +53,17 @@ export function SellerInfo({ name, reciverId }: SellerInfoProps) {
         </Link>
 
         <div className="flex flex-col">
-          <Link className="hover:text-indigo-500" to={`/user/${name}`}>
+          <Link className="hover:text-indigo-500" to={`/user/${id}`}>
             {name}
           </Link>
-          <Link className="text-sm hover:text-indigo-500" to={`/user/${name}`}>
+          {/* <Link className="text-sm hover:text-indigo-500" to={`/user/${name}`}>
             {seller.fullName}
-          </Link>
+          </Link> */}
         </div>
       </div>
 
       <div className="mt-4">
-        <StartConversationDialog reciverId={reciverId} />
+        <StartConversationDialog reciverId={reciverId} sellerName={name} />
       </div>
 
       <div className="text-sm">
@@ -65,7 +73,7 @@ export function SellerInfo({ name, reciverId }: SellerInfoProps) {
           Репутация
           <div className="flex items-center gap-1">
             <Star className="w-5 h-5 text-transparent fill-yellow-500" />
-            <span className="font-semibold">{seller.rating}</span>
+            <span className="font-semibold text-yellow-500">{avgRating}</span>
           </div>
         </div>
 
@@ -73,7 +81,7 @@ export function SellerInfo({ name, reciverId }: SellerInfoProps) {
 
         <div className="flex flex-row justify-between items-center">
           Выполнено заказов
-          <span>{seller.completedOrders}</span>
+          <span>{orderCompleted}</span>
         </div>
 
         <Separator className="my-4" />
@@ -83,11 +91,11 @@ export function SellerInfo({ name, reciverId }: SellerInfoProps) {
           <div className="flex items-center gap-2.5">
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 bg-green-500 rounded-full" />
-              <span>{seller.positiveReviews}</span>
+              <span>{positiveReviews}</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 bg-red-500 rounded-full" />
-              <span>{seller.negativeReviews}</span>
+              <span>{negativeReviews}</span>
             </div>
           </div>
         </div>
@@ -96,7 +104,7 @@ export function SellerInfo({ name, reciverId }: SellerInfoProps) {
 
         <div className="flex flex-row justify-between items-center">
           Заказов в работе
-          <span>{seller.ordersInProgress}</span>
+          <span>{orderQueue}</span>
         </div>
 
         <Separator className="my-4" />
@@ -105,7 +113,13 @@ export function SellerInfo({ name, reciverId }: SellerInfoProps) {
   );
 }
 
-function StartConversationDialog({ reciverId }: { reciverId: string }) {
+function StartConversationDialog({
+  reciverId,
+  sellerName,
+}: {
+  reciverId: string;
+  sellerName: string;
+}) {
   const [form, fields] = useForm({
     id: "start-conversation-form",
     onValidate({ formData }) {
@@ -120,14 +134,14 @@ function StartConversationDialog({ reciverId }: { reciverId: string }) {
           Связаться с продавцом
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg p-0">
+      <DialogContent className="sm:max-w-lg p-0">
         <div className="flex flex-col">
           {/* Header */}
           <div className="flex justify-between p-6 pb-4">
             <div className="space-y-1">
               <h3 className="text-lg font-semibold">Отправить сообщение</h3>
               <p className="text-sm text-muted-foreground">
-                Напишите сообщение для ANDREWNK чтобы начать диалог
+                Напишите сообщение для {sellerName} чтобы начать диалог
               </p>
             </div>
             <DialogClose className="rounded-full opacity-70 transition-opacity hover:opacity-100 self-start">

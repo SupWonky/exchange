@@ -1,9 +1,11 @@
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
+  MetaDescriptor,
+  MetaFunction,
   redirect,
 } from "@remix-run/node";
-import { Form, useLoaderData, useNavigate } from "@remix-run/react";
+import { Form, useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { Check, Clock, Infinity } from "lucide-react";
 import invariant from "tiny-invariant";
 import { CategoryBreadcrumbs } from "~/components/category-breadcrumbs";
@@ -17,15 +19,17 @@ import { placeOrder } from "~/models/order.server";
 import { getPricing } from "~/models/pricing.server";
 import { getServiceBySlug } from "~/models/service.server";
 import { getUser, requireUser } from "~/session.server";
-import { getPricingVariantLabel } from "~/utils";
+import { formatRating, getPricingVariantLabel } from "~/utils";
 import { SellerInfo } from "./seller-info";
 import { GuaranteeSection } from "./guarantee-section";
 import { FormEvent } from "react";
+import { siteConfig } from "~/config/site";
+import { useMarkAsView } from "~/hooks/use-mark-as-view";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   invariant(params.slug, "Slug not found");
 
-  const service = await getServiceBySlug({ slug: params.slug });
+  const service = await getServiceBySlug(params.slug);
 
   if (!service) {
     throw new Response("Not Found", { status: 404 });
@@ -58,9 +62,32 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   return {};
 };
 
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const res: MetaDescriptor[] = [
+    { title: `${data?.service.title} - ${siteConfig.name}` },
+    { name: "description", content: data?.service.description },
+    { name: "og:description", content: data?.service.description },
+    {
+      name: "og:title",
+      content: `${data?.service.title} - ${siteConfig.name}`,
+    },
+    { name: "author", content: data?.service.user.name },
+  ];
+
+  if (data?.service.media.at(0)) {
+    res.push({
+      property: "og:image",
+      content: data.service.media[0].url,
+    });
+  }
+
+  return res;
+};
+
 export default function ServicePage() {
   const { service, categoryTree, user } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
+  useMarkAsView({ serviceId: service.id, userId: user?.id });
 
   const handleOnSumbit = (e: FormEvent, price: number) => {
     if (!user) {
@@ -75,6 +102,8 @@ export default function ServicePage() {
       return;
     }
   };
+
+  const sellerInfo = service.user.userInfo;
 
   return (
     <div>
@@ -101,17 +130,14 @@ export default function ServicePage() {
                 />
               )}
 
-              <div>
-                <div className="font-semibold mb-1">Нужно для заказа:</div>
+              {service.requiredInfo && (
                 <div>
-                  <p>
-                    От вас потребуются наброски, рисунки или картинки логотипа
-                    из интернета, который необходимо отрисовать в высоком
-                    качестве. Я не собираю логотип из отдельных картинок.
-                    Желательно точное описание деталей и цветов.
-                  </p>
+                  <div className="font-semibold mb-1">Нужно для заказа:</div>
+                  <div>
+                    <p>{service.requiredInfo}</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div>
                 <div className="font-semibold mb-2.5">
@@ -327,7 +353,20 @@ export default function ServicePage() {
 
           <GuaranteeSection />
 
-          <SellerInfo name={service.user.email} reciverId={service.userId} />
+          <SellerInfo
+            id={service.user.id}
+            name={service.user.email}
+            reciverId={service.userId}
+            avgRating={formatRating(
+              sellerInfo?.reviewCount,
+              sellerInfo?.reviewPositive
+            )}
+            positiveReviews={sellerInfo?.reviewPositive || 0}
+            orderCompleted={sellerInfo?.orderCompleted || 0}
+            orderQueue={sellerInfo?.orderQueue || 0}
+            negativeReviews={sellerInfo?.reviewNegative || 0}
+            avatar={service.user.avatar}
+          />
         </div>
       </div>
     </div>

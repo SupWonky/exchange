@@ -1,13 +1,7 @@
-import { useState } from "react";
-import { useFetcher } from "@remix-run/react";
-import { PlusCircle, History, AlertCircle } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
+import { useEffect, useState } from "react";
+import { useFetcher, useNavigation } from "@remix-run/react";
+import { PlusCircle, History } from "lucide-react";
+import { DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
 import {
   Card,
   CardContent,
@@ -20,29 +14,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { User } from "@prisma/client";
-import { SubmissionResult, useForm } from "@conform-to/react";
-import { parseWithZod } from "@conform-to/zod";
-import { PopupSchema } from "~/constants/schemas";
+import { action } from "~/routes/api.v1.popup";
+import { siteConfig } from "~/config/site";
 
 export function BalanceModal({ user }: { user: User }) {
-  const fetcher = useFetcher();
-  const [form, fields] = useForm({
-    lastResult: fetcher.data as SubmissionResult<string[]> | undefined,
-    defaultValue: {
-      amount: 0,
-    },
-    onValidate({ formData }) {
-      return parseWithZod(formData, { schema: PopupSchema });
-    },
-    shouldValidate: "onBlur",
-    shouldRevalidate: "onInput",
-  });
-
+  const fetcher = useFetcher<typeof action>();
+  const navigation = useNavigation();
   const [isTopUpMode, setIsTopUpMode] = useState(false);
-
-  const isSubmitting = fetcher.state !== "idle";
+  const isSubmitting = navigation.state !== "idle";
 
   const handleTopUp = () => {
     setIsTopUpMode(true);
@@ -52,25 +32,36 @@ export function BalanceModal({ user }: { user: User }) {
     setIsTopUpMode(false);
   };
 
-  // const handleSubmitTopUp = (event: React.FormEvent) => {
-  //   event.preventDefault();
+  useEffect(() => {
+    if (fetcher.data) {
+      if ("transaction" in fetcher.data) {
+        const transaction = fetcher.data.transaction;
 
-  //   fetcher.submit({ amount }, { method: "post", action: "/balance" });
+        const form = document.createElement("form");
+        form.method = "post";
+        form.action = "https://demo.paykeeper.ru/create";
 
-  //   // Simulating successful response
-  //   setTimeout(() => {
-  //     setSuccessMessage(`Баланс успешно пополнен на ${amount} ₽`);
-  //     setIsTopUpMode(false);
-  //     setAmount(0);
+        const fields = {
+          sum: transaction.amount.toString(),
+          user_result_callback: `${siteConfig.serverUrl}/payment`,
+          clientid: transaction.id,
+        };
 
-  //     // Clear success message after 3 seconds
-  //     setTimeout(() => {
-  //       setSuccessMessage("");
-  //     }, 3000);
-  //   }, 1000);
-  // };
+        Object.entries(fields).forEach(([key, value]) => {
+          const input = document.createElement("input");
+          input.name = key;
+          input.value = value;
+          input.type = "hidden";
+          form.appendChild(input);
+        });
 
-  // Sample transaction history data - in a real app, this would come from API/props
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+      }
+    }
+  }, [fetcher.data]);
+
   const transactions = [
     {
       id: 1,
@@ -103,16 +94,6 @@ export function BalanceModal({ user }: { user: User }) {
           Управление балансом вашего аккаунта
         </DialogDescription>
       </DialogHeader>
-
-      {/* {successMessage && (
-          <Alert className="border-green-200 bg-green-50 mb-4">
-            <Check className="h-4 w-4 text-green-600" />
-            <AlertTitle className="text-green-800">Успешно</AlertTitle>
-            <AlertDescription className="text-green-700">
-              {successMessage}
-            </AlertDescription>
-          </Alert>
-        )} */}
 
       {!isTopUpMode ? (
         <Tabs defaultValue="balance" className="w-full">
@@ -195,7 +176,7 @@ export function BalanceModal({ user }: { user: User }) {
           </TabsContent>
         </Tabs>
       ) : (
-        <fetcher.Form method="post" action="/balance" id={form.id}>
+        <fetcher.Form method="post" action="/api/v1/popup">
           <Card>
             <CardHeader>
               <CardTitle>Пополнение баланса</CardTitle>
@@ -206,25 +187,18 @@ export function BalanceModal({ user }: { user: User }) {
 
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor={fields.amount.name}>Сумма пополнения (₽)</Label>
+                <Label htmlFor="sum">Сумма пополнения (₽)</Label>
                 <Input
-                  id={fields.amount.name}
-                  name={fields.amount.name}
+                  id="sum"
+                  name="sum"
                   type="number"
-                  defaultValue={fields.amount.initialValue}
+                  defaultValue={0}
+                  min={100}
                 />
                 <p className="text-sm text-gray-500">
                   Минимальная сумма пополнения: 100 ₽
                 </p>
               </div>
-
-              {fields.amount.errors && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Ошибка</AlertTitle>
-                  <AlertDescription>{fields.amount.errors}</AlertDescription>
-                </Alert>
-              )}
             </CardContent>
 
             <CardFooter className="flex justify-between flex-col sm:flex-row gap-2">

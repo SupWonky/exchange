@@ -19,3 +19,36 @@ export function parseFilters(params: Record<string, string>) {
     }
   }
 }
+
+export async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function parseArgs(raw: string[]) {
+  const args: Record<string, any> = {
+    _: [],
+  };
+
+  for (let i = 0; i < raw.length; i++) {
+    const token = raw[i];
+
+    if (token.startsWith("--")) {
+      const key = token.slice(2);
+      const [k, v] = key.split("=");
+
+      if (v !== undefined) {
+        args[k] = v;
+      } else if (raw[i + 1] && !raw[i + 1].startsWith("-")) {
+        args[k] = raw[++i];
+      } else {
+        args[k] = true;
+      }
+    } else if (token.startsWith("-") && token.length === 2) {
+      args[token[1]] = true;
+    } else {
+      args._.push(token);
+    }
+  }
+
+  return args;
+}

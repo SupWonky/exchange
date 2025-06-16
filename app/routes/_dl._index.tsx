@@ -21,7 +21,7 @@ export default function Index() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {data.map((category) => (
             <Link
-              className="group focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-xl overflow-hidden shadow hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+              className="group focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-xl overflow-hidden shadow-lg border"
               key={category.id}
               to={`/categories/${category.slug}`}
             >
@@ -40,7 +40,7 @@ export default function Index() {
                 )}
 
                 {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-70"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent duration-300 transition-opacity opacity-70 group-hover:opacity-100"></div>
 
                 {/* Category name - positioned at bottom for better readability */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 transform transition-transform duration-300 group-hover:translate-y-0">

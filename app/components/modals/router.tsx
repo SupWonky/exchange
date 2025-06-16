@@ -54,10 +54,7 @@ export const ModalRouter: React.FC<ModalRouterProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent
-        className="max-w-full sm:max-w-lg"
-        onCloseAutoFocus={onClose}
-      >
+      <DialogContent onCloseAutoFocus={onClose}>
         <div className="flex items-center justify-between px-4 sm:px-6 h-[var(--header-height)]">
           {canGoBack && (
             <button

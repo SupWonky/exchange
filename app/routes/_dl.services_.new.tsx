@@ -56,7 +56,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   let service = undefined;
   if (typeof id === "string" && id.length !== 0) {
-    service = await getServiceById({ id });
+    service = await getServiceById(id);
   }
 
   const categories = await getCategoriesTree();

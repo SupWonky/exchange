@@ -76,7 +76,7 @@ const MessageSchema = z.object({
 });
 
 const PopupSchema = z.object({
-  amount: z
+  sum: z
     .number({ message: "Введите сумму пополнения" })
     .int({ message: "Введите целое число" })
     .positive({ message: "Число должно быть положительным" }),

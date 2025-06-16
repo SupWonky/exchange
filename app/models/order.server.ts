@@ -310,8 +310,8 @@ export async function getOrder(id: Order["id"]) {
           service: true,
         },
       },
-      buyer: true,
-      seller: true,
+      buyer: { include: { avatar: true } },
+      seller: { include: { avatar: true } },
       chat: {
         include: {
           messages: {

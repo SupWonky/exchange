@@ -1,13 +1,11 @@
-import { Link, useFetcher } from "@remix-run/react";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { StarIcon, HeartIcon, Loader2 } from "lucide-react";
-import { formatCurrency } from "~/lib/utils";
-import { Card, CardContent, CardHeader } from "./ui/card";
+import { useFetcher, useSearchParams } from "@remix-run/react";
 import { Button } from "./ui/button";
 import * as React from "react";
-import { getServiceItemsByCategory } from "~/models/service.server";
-
-type ServiceType = Awaited<ReturnType<typeof getServiceItemsByCategory>>[0];
+import { ServiceCard } from "./service-card";
+import { Loader2 } from "lucide-react";
+import { Media, PricingTier, Service, User, UserInfo } from "@prisma/client";
+import { formatRating } from "~/utils";
+import { loader } from "~/routes/feed";
 
 type ServiceListProps = (
   | { categoryId: string; query?: never }
@@ -17,19 +15,29 @@ type ServiceListProps = (
   initServices: ServiceType[];
 };
 
+type ServiceType = Service & {
+  media: Media[];
+  pricingTier: PricingTier[];
+  user: User & {
+    userInfo: UserInfo | null;
+    avatar: Media | null;
+  };
+};
+
 export function ServiceList({
   initServices,
   categoryId,
   query,
   limit = 6,
 }: ServiceListProps) {
+  const [searchParams] = useSearchParams();
   const [services, setServices] = React.useState(initServices);
   const [cursor, setCursor] = React.useState<string | null>(
     initServices.length === limit
       ? initServices[initServices.length - 1].id
       : null
   );
-  const fetcher = useFetcher<ServiceType[]>();
+  const fetcher = useFetcher<typeof loader>();
 
   React.useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data) {
@@ -56,11 +64,11 @@ export function ServiceList({
         ? initServices[initServices.length - 1].id
         : null
     );
-  }, [initServices, limit]);
+  }, [initServices]);
 
   function loadMore() {
     if (!cursor || fetcher.state === "loading") return;
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams);
 
     if (categoryId) {
       params.set("categoryId", categoryId);
@@ -78,8 +86,27 @@ export function ServiceList({
   return (
     <div className="flex flex-col">
       <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {services.map((service) => (
-          <ServiceCard service={service} key={service.id} />
+        {services.map(({ id, title, slug, media, pricingTier, user }) => (
+          <ServiceCard
+            title={title}
+            url={`/services/${slug}`}
+            imageUrl={
+              media.at(0)?.url ||
+              "https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80"
+            }
+            price={pricingTier.find((v) => v.variant === "BASIC")?.price || 500}
+            user={{
+              id: user.id,
+              name: user.name,
+              avgRating: formatRating(
+                user.userInfo?.reviewCount,
+                user.userInfo?.reviewPositive
+              ),
+              reviewCount: user.userInfo ? user.userInfo.reviewCount : 0,
+              avatar: user.avatar,
+            }}
+            key={id}
+          />
         ))}
       </div>
 
@@ -102,97 +129,5 @@ export function ServiceList({
         </Button>
       )}
     </div>
-  );
-}
-
-function ServiceCard({ service }: { service: ServiceType }) {
-  const fallback = service.user.name.charAt(0).toUpperCase();
-  const basicVarinat = service.pricingTier.find((v) => v.variant === "BASIC");
-  const price = basicVarinat ? basicVarinat.price : 500;
-  const image = service.media.at(0);
-
-  return (
-    <Card className="group overflow-hidden transition-shadow hover:shadow-lg rounded-lg">
-      <div className="relative">
-        <Link
-          to={`/services/${service.slug}`}
-          target="_blank"
-          rel="noreferrer"
-          className="block overflow-hidden aspect-[5/3]"
-        >
-          <img
-            src={
-              image
-                ? image.url
-                : "https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80"
-            }
-            alt={service.title}
-            className="object-cover w-full h-full"
-          />
-        </Link>
-
-        {/* {service.featured && (
-          <Badge
-            variant="secondary"
-            className="absolute top-3 left-3 bg-white/90 text-primary font-semibold"
-          >
-            Featured
-          </Badge>
-        )} */}
-
-        <button className="absolute top-3 right-3 p-1.5 bg-black/40 rounded-full transition-colors text-white hover:text-red-500">
-          <HeartIcon className="h-4 w-4" />
-        </button>
-      </div>
-
-      <CardHeader className="px-4 py-3 border-b h-[73px]">
-        <Link
-          to={`/services/${service.slug}`}
-          target="_blank"
-          rel="noreferrer"
-          className="block"
-        >
-          <h3 className="text-base line-clamp-2 text-ellipsis">
-            {service.title}
-          </h3>
-        </Link>
-      </CardHeader>
-
-      <CardContent className="px-4 py-3">
-        <div className="flex items-center gap-2">
-          <Link to={`/user/${service.user.id}`} className="shrink-0">
-            <Avatar className="h-8 w-8 border">
-              <AvatarImage
-                src="https://github.com/shadcn.png"
-                alt={service.user.name}
-              />
-              <AvatarFallback className="bg-primary/10">
-                {fallback}
-              </AvatarFallback>
-            </Avatar>
-          </Link>
-          <div className="flex flex-col gap-0.5">
-            <Link
-              to={`/user/${service.user.id}`}
-              className="hover:underline font-medium text-sm truncate max-w-40"
-            >
-              {service.user.name}
-            </Link>
-            <div className="flex items-center text-xs">
-              <StarIcon className="w-3.5 h-3.5 shrink-0 stroke-transparent fill-yellow-500 mr-1" />
-              <span className="font-semibold">{service.averageRating}</span>
-              <span className="text-muted-foreground ml-1">{`(${service.totalReviews})`}</span>
-            </div>
-          </div>
-
-          <div className="ml-auto">
-            <span className="text-lg text-primary font-bold tabular-nums">
-              {formatCurrency(price)}
-              <span className="text-base ml-1">₽</span>
-            </span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 }

@@ -39,7 +39,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return redirect("/services/new");
   }
 
-  const service = await getServiceById({ id });
+  const service = await getServiceById(id);
   if (!service) {
     return redirect("/services/new");
   }

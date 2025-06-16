@@ -1,16 +1,19 @@
 // app/components/search-input.tsx
 import { Form, useSearchParams } from "@remix-run/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "./ui/input";
 
 export function SearchInput() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [searchParams] = useSearchParams();
+  const paramsValue = searchParams.get("q") ?? "";
+  const [value, setValue] = useState(paramsValue);
 
-  const defaultValue = searchParams.get("q") || "";
+  useEffect(() => {
+    setValue(paramsValue);
+  }, [paramsValue]);
 
-  // Keyboard shortcut (Ctrl+K/Cmd+K)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
@@ -38,7 +41,8 @@ export function SearchInput() {
           placeholder="Найти услугу..."
           className="h-8 px-10 py-2"
           aria-label="Search services"
-          defaultValue={defaultValue}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
         />
 
         <kbd className="pointer-events-none absolute right-3 top-1/2 hidden h-5 -translate-y-1/2 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:flex">

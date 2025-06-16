@@ -25,7 +25,6 @@ import { cn } from "~/lib/utils";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { InputConform } from "~/components/conform/input";
@@ -160,13 +159,12 @@ export function Chat({ order, user }: ChatProps) {
               >
                 {buttonText}
               </Button>
-              {targetStatus !== "CANCELED" && (
+              {targetStatus === "COMPLETED" && (
                 <Button
-                  onClick={() => {}}
-                  variant="ghost"
-                  className="text-muted-foreground"
+                  onClick={() => handleStatusUpdate("IN_PROGRESS")}
+                  variant="outline"
                 >
-                  Отложить
+                  На доработку
                 </Button>
               )}
             </div>
@@ -208,179 +206,179 @@ export function Chat({ order, user }: ChatProps) {
   };
 
   useEffect(() => {
-    add(files);
+    if (files.length > 0) {
+      add(files);
+    }
   }, [files]);
 
   return (
-    <TooltipProvider>
-      <div className="bg-background sm:rounded-lg border overflow-hidden h-[650px] flex flex-col">
-        {/* Header */}
-        <div className="p-3 border-b flex items-center justify-between sticky top-0 z-10">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary/10 p-1.5 rounded-full">
-              <MessageSquare size={18} className="text-primary" />
-            </div>
-            <h2 className="font-medium text-foreground">Чат заказа</h2>
+    <div className="bg-background sm:rounded-lg border overflow-hidden h-[650px] flex flex-col">
+      {/* Header */}
+      <div className="p-3 border-b flex items-center justify-between sticky top-0 z-10">
+        <div className="flex items-center gap-2">
+          <div className="bg-primary/10 p-1.5 rounded-full">
+            <MessageSquare size={18} className="text-primary" />
+          </div>
+          <h2 className="font-medium text-foreground">Чат заказа</h2>
+        </div>
+      </div>
+
+      {/* Message area */}
+      <div
+        className="flex-1 overflow-y-auto p-4 space-y-4 relative"
+        ref={chatContainerRef}
+      >
+        {/* Системные сообщения */}
+        <div className="text-center">
+          <div className="inline-flex items-center gap-1.5 bg-secondary text-secondary-foreground text-xs px-3 py-1.5 rounded-full border border-border">
+            <Calendar size={12} />
+            Заказ создан {formatDate(order.createdAt)}
           </div>
         </div>
 
-        {/* Message area */}
-        <div
-          className="flex-1 overflow-y-auto p-4 space-y-4 relative"
-          ref={chatContainerRef}
-        >
-          {/* Системные сообщения */}
-          <div className="text-center">
-            <div className="inline-flex items-center gap-1.5 bg-secondary text-secondary-foreground text-xs px-3 py-1.5 rounded-full border border-border">
-              <Calendar size={12} />
-              Заказ создан {formatDate(order.createdAt)}
+        {/* Возможные действия в чате */}
+        {getActionButtons()}
+
+        {/* Сообщения */}
+        {order.chat?.messages.map((message, index) => (
+          <ChatMessage
+            key={message.id}
+            message={message}
+            currentUserId={user.id}
+            showAvatar={
+              index === 0 ||
+              order.chat?.messages[index - 1].sender.id !== message.sender.id
+            }
+          />
+        ))}
+      </div>
+
+      {/* Просмотр вложений */}
+      {attachments.length > 0 && (
+        <div className="flex h-32 overflow-x-auto border-t gap-2 p-3 bg-secondary">
+          {attachments.map((attachment, idx) => (
+            <div
+              key={idx}
+              className="relative group h-full aspect-square bg-background rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary border border-border"
+            >
+              {attachment.type === "IMAGE" ? (
+                <img
+                  src={attachment.url}
+                  className="w-full h-full object-cover"
+                  alt={attachment.name || "Изображение"}
+                />
+              ) : attachment.type === "MOVIE" ? (
+                <video
+                  controls
+                  className="w-full h-full object-cover"
+                  src={attachment.url}
+                  muted
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <File
+                    className="size-8 text-muted-foreground"
+                    strokeWidth={1.5}
+                  />
+                </div>
+              )}
+              <div
+                title={attachment.name}
+                className="absolute bottom-1 left-1 right-1 text-xs text-foreground truncate bg-background/90 px-1 rounded"
+              >
+                {attachment.name}
+              </div>
+              <button
+                onClick={() => remove(idx)}
+                className="absolute top-1 right-1 w-6 h-6 bg-foreground/70 text-background rounded-full flex items-center justify-center hover:bg-foreground focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                aria-label={`Удалить ${attachment.name || "файл"}`}
+                type="button"
+              >
+                <X className="size-4" />
+              </button>
             </div>
-          </div>
-
-          {/* Возможные действия в чате */}
-          {getActionButtons()}
-
-          {/* Сообщения */}
-          {order.chat?.messages.map((message, index) => (
-            <ChatMessage
-              key={message.id}
-              message={message}
-              currentUserId={user.id}
-              showAvatar={
-                index === 0 ||
-                order.chat?.messages[index - 1].sender.id !== message.sender.id
-              }
-            />
           ))}
         </div>
+      )}
 
-        {/* Просмотр вложений */}
-        {attachments.length > 0 && (
-          <div className="flex h-32 overflow-x-auto border-t gap-2 p-3 bg-secondary">
-            {attachments.map((attachment, idx) => (
-              <div
-                key={idx}
-                className="relative group h-full aspect-square bg-background rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary border border-border"
-              >
-                {attachment.type === "IMAGE" ? (
-                  <img
-                    src={attachment.url}
-                    className="w-full h-full object-cover"
-                    alt={attachment.name || "Изображение"}
-                  />
-                ) : attachment.type === "MOVIE" ? (
-                  <video
-                    controls
-                    className="w-full h-full object-cover"
-                    src={attachment.url}
-                    muted
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center">
-                    <File
-                      className="size-8 text-muted-foreground"
-                      strokeWidth={1.5}
-                    />
-                  </div>
-                )}
-                <div
-                  title={attachment.name}
-                  className="absolute bottom-1 left-1 right-1 text-xs text-foreground truncate bg-background/90 px-1 rounded"
-                >
-                  {attachment.name}
-                </div>
-                <button
-                  onClick={() => remove(idx)}
-                  className="absolute top-1 right-1 w-6 h-6 bg-foreground/70 text-background rounded-full flex items-center justify-center hover:bg-foreground focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                  aria-label={`Удалить ${attachment.name || "файл"}`}
-                  type="button"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Поле ввода */}
-        <fetcher.Form id={form.id} method="post" className="p-3 border-t">
-          <div className="flex gap-2 items-end">
-            <div className="relative flex-1">
-              <InputConform
-                meta={fields.content}
-                //ref={inputRef}
-                placeholder="Введите сообщение..."
-                className="pr-10 rounded-full border-input focus:border-primary h-11 focus:ring-1 focus:ring-primary/20"
-                autoComplete="off"
-                disabled={isSubmitting}
-                type="text"
-              />
-              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={() => fileInputRef.current?.click()}
-                      type="button"
-                      className={cn(
-                        "text-muted-foreground rounded-full hover:bg-secondary transition-colors",
-                        attachments.length >= MAX_ATTACHMENTS &&
-                          "opacity-50 cursor-not-allowed"
-                      )}
-                      variant="ghost"
-                      size="icon"
-                      disabled={attachments.length >= MAX_ATTACHMENTS}
-                    >
-                      <Paperclip size={16} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {attachments.length >= MAX_ATTACHMENTS
-                      ? `Достигнут лимит (${MAX_ATTACHMENTS})`
-                      : "Приложить файл"}
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="sr-only"
-              tabIndex={-1}
-              onChange={handleFileChange}
-              aria-hidden
-            />
-            <input
-              name={fields.attachments.name}
-              className="sr-only"
-              tabIndex={-1}
-              aria-hidden
-              value={JSON.stringify(attachments)}
-              readOnly
-            />
-            <input
-              className="sr-only"
-              {...getInputProps(fields.chatId, { type: "text" })}
-              key={fields.chatId.key}
-            />
-
-            <Button
-              type="submit"
-              size="icon"
-              className={cn(
-                "rounded-full w-11 h-11 flex items-center justify-center transition-colors",
-                isSubmitting && "opacity-70"
-              )}
-              aria-label="Отправить сообщение"
+      {/* Поле ввода */}
+      <fetcher.Form id={form.id} method="post" className="p-3 border-t">
+        <div className="flex gap-2 items-end">
+          <div className="relative flex-1">
+            <InputConform
+              meta={fields.content}
+              //ref={inputRef}
+              placeholder="Введите сообщение..."
+              className="pr-10 rounded-full border-input focus:border-primary h-11 focus:ring-1 focus:ring-primary/20"
+              autoComplete="off"
               disabled={isSubmitting}
-              name="intent"
-              value="sendMessage"
-            >
-              <ArrowUp className="size-5" />
-            </Button>
+              type="text"
+            />
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => fileInputRef.current?.click()}
+                    type="button"
+                    className={cn(
+                      "text-muted-foreground rounded-full hover:bg-secondary transition-colors",
+                      attachments.length >= MAX_ATTACHMENTS &&
+                        "opacity-50 cursor-not-allowed"
+                    )}
+                    variant="ghost"
+                    size="icon"
+                    disabled={attachments.length >= MAX_ATTACHMENTS}
+                  >
+                    <Paperclip size={16} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {attachments.length >= MAX_ATTACHMENTS
+                    ? `Достигнут лимит (${MAX_ATTACHMENTS})`
+                    : "Приложить файл"}
+                </TooltipContent>
+              </Tooltip>
+            </div>
           </div>
-        </fetcher.Form>
-      </div>
-    </TooltipProvider>
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="sr-only"
+            tabIndex={-1}
+            onChange={handleFileChange}
+            aria-hidden
+          />
+          <input
+            name={fields.attachments.name}
+            className="sr-only"
+            tabIndex={-1}
+            aria-hidden
+            value={JSON.stringify(attachments)}
+            readOnly
+          />
+          <input
+            className="sr-only"
+            {...getInputProps(fields.chatId, { type: "text" })}
+            key={fields.chatId.key}
+          />
+
+          <Button
+            type="submit"
+            size="icon"
+            className={cn(
+              "rounded-full w-11 h-11 flex items-center justify-center transition-colors",
+              isSubmitting && "opacity-70"
+            )}
+            aria-label="Отправить сообщение"
+            disabled={isSubmitting}
+            name="intent"
+            value="sendMessage"
+          >
+            <ArrowUp className="size-5" />
+          </Button>
+        </div>
+      </fetcher.Form>
+    </div>
   );
 }
 

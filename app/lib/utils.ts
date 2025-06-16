@@ -88,3 +88,54 @@ export function parseFileType(value: string) {
 
   return type;
 }
+
+interface BaseMenuItem {
+  label: string;
+  url: string;
+  className?: string;
+}
+
+interface MenuItemProps extends BaseMenuItem {
+  type: "item";
+}
+
+interface NestedMenuItemProps extends BaseMenuItem {
+  type: "nested";
+  children?: NavigationItemType[];
+  root?: boolean;
+}
+
+type NavigationItemType = MenuItemProps | NestedMenuItemProps;
+
+export function mapToNavigationItems<T>(
+  items: T[],
+  config: {
+    getLabelFn: (item: T) => string;
+    getUrlFn: (item: T) => string;
+    getChildrenFn: (item: T) => T[] | undefined;
+    shouldBeNested?: (item: T) => boolean;
+  }
+): NavigationItemType[] {
+  const { getLabelFn, getUrlFn, getChildrenFn, shouldBeNested } = config;
+
+  return items.map((item) => {
+    const children = getChildrenFn?.(item);
+    const hasChildren = children && children.length > 0;
+    const isNested = shouldBeNested ? shouldBeNested(item) : hasChildren;
+
+    if (isNested) {
+      return {
+        type: "nested",
+        label: getLabelFn(item),
+        url: getUrlFn(item),
+        children: hasChildren ? mapToNavigationItems(children, config) : [],
+      };
+    }
+
+    return {
+      type: "item",
+      label: getLabelFn(item),
+      url: getUrlFn(item),
+    };
+  });
+}

@@ -12,6 +12,7 @@ import {
 import { ArrowLeft, ArrowUp } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import invariant from "tiny-invariant";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { MessageSchema } from "~/constants/schemas";
@@ -64,7 +65,6 @@ export const action = async ({ request }: LoaderFunctionArgs) => {
   return submission.reply({ resetForm: true });
 };
 
-// Helper: Group messages with a date divider
 const groupMessagesWithDates = (messages: Message[]) => {
   const grouped: Array<
     { type: "date"; date: Date } | { type: "message"; data: Message }
@@ -160,12 +160,12 @@ export default function ChatPage() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-              <span className="text-sm">👥</span>
-            </div>
-            <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background bg-green-500" />
-          </div>
+          <Avatar className="h-10 w-10 border">
+            <AvatarImage src={participant?.avatar?.url} />
+            <AvatarFallback>
+              {participant?.name.at(0)?.toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
           <div>
             <h2 className="font-semibold">{participant?.email}</h2>
             <p className="text-sm text-muted-foreground">Онлайн</p>
@@ -199,10 +199,6 @@ export default function ChatPage() {
                     <span className="text-muted-foreground">Статус:</span>{" "}
                     {item.order?.status}
                   </div>
-                  {/* <div>
-                      <span className="text-muted-foreground">Total:</span>{" "}
-                      ${group.order.totalAmount}
-                    </div> */}
                 </div>
               </div>
             ))}
@@ -270,8 +266,6 @@ export default function ChatPage() {
           </div>
         )}
       </div>
-
-      {/* Message Input */}
 
       <Form
         method="post"

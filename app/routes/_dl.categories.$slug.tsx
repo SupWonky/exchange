@@ -1,14 +1,24 @@
-import { LoaderFunctionArgs } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import {
+  LoaderFunctionArgs,
+  MetaFunction,
+  MetaDescriptor,
+} from "@remix-run/node";
+import {
+  Link,
+  ShouldRevalidateFunctionArgs,
+  useLoaderData,
+} from "@remix-run/react";
 import invariant from "tiny-invariant";
 import { CategoryBreadcrumbs } from "~/components/category-breadcrumbs";
 import { ConfigurableFilter, FilterSectionType } from "~/components/filters";
 import { ServiceList } from "~/components/service-list";
+import { SortFilter } from "~/components/sort-filter";
+import { siteConfig } from "~/config/site";
 import {
   getCategoryTree,
   getCategoryWithChildren,
 } from "~/models/category.server";
-import { getServiceItemsByCategory } from "~/models/service.server";
+import { getServiceListItems } from "~/models/service.server";
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   invariant(params.slug, "Slug not found");
@@ -23,33 +33,76 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
   const categoryTree = await getCategoryTree({ path: category.path });
 
-  let services = undefined;
   if (category.parent) {
     const searchParams = new URL(request.url).searchParams;
 
-    const prices = searchParams.get("price")?.split("_");
+    const [minPrice, maxPrice] = searchParams.get("price")?.split("_") ?? [];
+    const minReviews = Number(searchParams.get("sminreviews") ?? 0);
+    const sortSlug = searchParams.get("sort") ?? undefined;
+    const orderQueueParam = searchParams.get("sorderqueue");
+    const orderQueue = orderQueueParam ? Number(orderQueueParam) : undefined;
 
-    services = await getServiceItemsByCategory({
+    const [items, totalCount] = await getServiceListItems({
       categoryId: category.id,
       filters: {
-        pricingTier: {
-          some: {
-            price: {
-              ...(prices?.at(0) ? { gte: Number(prices[0]) } : {}),
-              ...(prices?.at(1) ? { lte: Number(prices[1]) } : {}),
+        service: {
+          pricingTier: {
+            some: {
+              price: {
+                ...(minPrice ? { gte: Number(minPrice) } : {}),
+                ...(maxPrice ? { lte: Number(maxPrice) } : {}),
+              },
             },
           },
+
+          ...(orderQueue !== undefined
+            ? {
+                user: {
+                  userInfo: {
+                    orderQueue: {
+                      lte: orderQueue,
+                    },
+                  },
+                },
+              }
+            : {}),
         },
+
+        reviewCount: { gte: minReviews },
       },
+      sortSlug,
     });
+
+    return {
+      category,
+      categoryTree,
+      services: items.map((item) => item.service),
+      totalCount,
+    };
   }
-  return { category, services, categoryTree };
+
+  return {
+    category,
+    categoryTree,
+  };
 }
 
-export default function CategoryPage() {
-  const { category, services, categoryTree } = useLoaderData<typeof loader>();
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const res: MetaDescriptor[] = [
+    { title: `${data?.category.name} - ${siteConfig.name}` },
+  ];
 
-  // If the category is a root category (no parent), render its child categories.
+  if (data?.category.image) {
+    res.push({ property: "og:image", content: data.category.image.url });
+  }
+
+  return res;
+};
+
+export default function CategoryPage() {
+  const { category, services, categoryTree, totalCount } =
+    useLoaderData<typeof loader>();
+
   if (!category.parent) {
     return (
       <div className="container mx-auto px-4 py-6">
@@ -60,7 +113,7 @@ export default function CategoryPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {category.children.map((category) => (
               <Link
-                className="group focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-xl overflow-hidden shadow hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                className="group focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-xl overflow-hidden shadow-lg border"
                 key={category.id}
                 to={`/categories/${category.slug}`}
               >
@@ -78,10 +131,8 @@ export default function CategoryPage() {
                     </div>
                   )}
 
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-70"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-70 duration-300 transition-opacity group-hover:opacity-100"></div>
 
-                  {/* Category name - positioned at bottom for better readability */}
                   <div className="absolute bottom-0 left-0 right-0 p-4 transform transition-transform duration-300 group-hover:translate-y-0">
                     <h3 className="text-white text-xl font-medium">
                       {category.name}
@@ -99,17 +150,6 @@ export default function CategoryPage() {
   }
 
   const filterConfig: FilterSectionType[] = [
-    {
-      id: "category",
-      title: "Категория",
-      type: "checkbox",
-      paramName: "category",
-      options: [
-        { value: "electronics", label: "Электроника" },
-        { value: "clothing", label: "Одежда" },
-        { value: "home", label: "Для дома" },
-      ],
-    },
     {
       id: "price",
       title: "Цена",
@@ -130,8 +170,33 @@ export default function CategoryPage() {
       minPlaceholder: "От руб.",
       maxPlaceholder: "До руб.",
     },
+    {
+      id: "sminreviews",
+      title: "Положительных отзывов",
+      type: "radio",
+      paramName: "sminreviews",
+      options: [
+        { label: "От 1", value: "1" },
+        { label: "От 5", value: "5" },
+        { label: "От 20", value: "20" },
+        { label: "От 100", value: "100" },
+      ],
+    },
+    {
+      id: "sorderqueue",
+      title: "Заказов в работе",
+      type: "radio",
+      paramName: "sorderqueue",
+      options: [
+        { label: "Нет", value: "0" },
+        { label: "До 1", value: "1" },
+        { label: "До 3", value: "3" },
+        { label: "До 5", value: "5" },
+        { label: "До 8", value: "8" },
+      ],
+    },
   ];
-  // Otherwise, the category is a sub-category so render its services.
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex flex-row justify-between items-center mb-6">
@@ -140,6 +205,14 @@ export default function CategoryPage() {
           className="hidden lg:block"
           categoryTree={categoryTree}
         />
+      </div>
+
+      <div className="flex flex-row justify-between items-center mb-4">
+        <div className="text-sm text-muted-foreground">
+          {totalCount} результатов
+        </div>
+
+        <SortFilter />
       </div>
 
       <div className="grid lg:grid-cols-[280px_1fr] gap-6">

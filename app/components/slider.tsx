@@ -82,7 +82,7 @@ export function Slider({
             <img
               src={image.url}
               alt={image.alt || `Slide ${index + 1}`}
-              className="w-auto h-auto object-cover"
+              className="w-full h-auto object-cover"
               loading={index === 0 ? "eager" : "lazy"}
               decoding={index === 0 ? "auto" : "async"}
             />

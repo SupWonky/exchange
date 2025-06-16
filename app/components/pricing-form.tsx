@@ -349,7 +349,7 @@ function OptionDialog({ onAdd }: OptionDialogProps) {
           <Plus className="w-5 h-5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent>
         <div className="flex items-center h-16 px-6">
           <DialogClose className="ml-auto opacity-70 hover:opacity-100 transition-opacity">
             <Cross1Icon className="h-5 w-5" />

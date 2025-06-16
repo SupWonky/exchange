@@ -1,5 +1,5 @@
 import { Category } from "@prisma/client";
-import { Link } from "@remix-run/react";
+import { Link, useViewTransitionState } from "@remix-run/react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 import { useState } from "react";
 import { cn } from "~/lib/utils";
@@ -72,7 +72,7 @@ function CategoryItem({ category }: { category: CategoryNode }) {
         </li>
       </HoverCardTrigger>
       <HoverCardContent
-        className="gap-x-16 block w-auto rounded-none"
+        className="gap-x-16 block w-auto rounded-b-lg"
         align="start"
         sideOffset={0}
         style={{
@@ -93,6 +93,7 @@ function CategoryItem({ category }: { category: CategoryNode }) {
                     role="menuitem"
                     tabIndex={-1}
                     className="block py-2 px-3 rounded-md hover:bg-gray-50 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors duration-150 text-sm break-words"
+                    onClick={() => setOpen(false)}
                   >
                     {child.name}
                   </Link>
@@ -108,6 +109,7 @@ function CategoryItem({ category }: { category: CategoryNode }) {
       <Link
         to={`/categories/${category.slug}`}
         className="py-2 px-4 block group-hover:text-primary relative transition-colors whitespace-nowrap"
+        onClick={() => setOpen(false)}
       >
         {category.name}
         <span className="absolute left-0 bottom-0 w-full h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left" />

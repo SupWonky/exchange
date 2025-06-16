@@ -17,6 +17,7 @@ import { LoginDialog } from "./components/modals/login";
 import { JoinDialog } from "./components/modals/join";
 import { ModalProvider } from "./components/providers/modal-provider";
 import { getUserPrefs } from "./lib/user.server";
+import { TooltipProvider } from "./components/ui/tooltip";
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -27,7 +28,7 @@ export const links: LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap",
   },
 ];
 
@@ -60,7 +61,9 @@ export default function AppWithProviders() {
   const { user } = useLoaderData<typeof loader>();
   return (
     <ModalProvider>
-      <App />
+      <TooltipProvider>
+        <App />
+      </TooltipProvider>
 
       <ModalRouter>
         {user && (

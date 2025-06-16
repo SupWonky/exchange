@@ -33,7 +33,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (typeof serviceId !== "string" || serviceId.length === 0) {
         return new Response("Invalid serivce", { status: 400 });
       }
-      await deleteService({ id: serviceId });
+      await deleteService(serviceId);
 
       return { success: true };
     }

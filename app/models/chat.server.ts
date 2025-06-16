@@ -7,7 +7,11 @@ export async function getChatById(id: Chat["id"]) {
       id,
     },
     include: {
-      participants: true,
+      participants: {
+        include: {
+          avatar: true,
+        },
+      },
     },
   });
 }
@@ -97,6 +101,9 @@ export async function getChatsByUser(userId: User["id"]) {
         participants: {
           where: {
             id: { not: userId },
+          },
+          include: {
+            avatar: true,
           },
         },
       },

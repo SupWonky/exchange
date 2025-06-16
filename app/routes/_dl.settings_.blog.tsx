@@ -36,7 +36,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   await updateBlog({
     id: userId,
     name: username,
-    description: description || null,
+    bio: description || null,
   });
 
   return submission.reply({ resetForm: true });
@@ -54,7 +54,7 @@ export default function EditBlog() {
     shouldRevalidate: "onInput",
     defaultValue: {
       username: user.name,
-      description: user.description,
+      description: user.bio,
     },
   });
 

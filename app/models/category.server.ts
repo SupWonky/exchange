@@ -95,6 +95,7 @@ export async function getCategoryWithChildren({
     include: {
       children: { include: { image: true } },
       parent: true,
+      image: true,
     },
   });
 }

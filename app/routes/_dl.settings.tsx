@@ -49,7 +49,7 @@ export default function SettingsPage() {
           </div> */}
 
           {/* Основные (General) */}
-          <div className="p-1">
+          {/* <div className="p-1">
             <Link
               to="general"
               className="flex items-start hover:bg-muted rounded-xl p-3"
@@ -64,7 +64,7 @@ export default function SettingsPage() {
                 </p>
               </div>
             </Link>
-          </div>
+          </div> */}
 
           {/* Уведомления (Notifications) */}
           {/* <div className="p-4">

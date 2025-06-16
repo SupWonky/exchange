@@ -1,37 +1,50 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient, User } from "@prisma/client";
 
 import { singleton } from "./singleton.server";
 
 // Hard-code a unique key, so we can look up the client when this module gets re-imported
 const prisma = singleton("prisma", () => new PrismaClient());
 
+export async function recaclStats(
+  userId: User["id"],
+  tx: Prisma.TransactionClient
+) {
+  const total = await tx.review.count({
+    where: { service: { userId } },
+  });
+
+  const recs = await tx.review.count({
+    where: { service: { userId }, recommend: true },
+  });
+
+  const averageRating = total > 0 ? (recs / total) * 5 : 0;
+
+  await tx.user.update({
+    where: { id: userId },
+    data: {
+      averageRating,
+      reviewsCount: total,
+    },
+  });
+}
+
 prisma.$use(async (params, next) => {
   if (
     params.model === "Review" &&
     ["create", "update", "delete"].includes(params.action)
   ) {
-    const result = await next(params);
-
-    await prisma.$transaction(async (tx) => {
-      const serviceId =
-        params.args.data?.serviceId || params.args.where?.serviceId;
-
-      const aggregations = await tx.review.aggregate({
-        where: { serviceId },
-        _avg: { rating: true },
-        _count: true,
-      });
-
-      await tx.service.update({
-        where: { id: serviceId },
-        data: {
-          averageRating: aggregations._avg.rating || 0,
-          totalReviews: aggregations._count,
-        },
-      });
+    const serviceId =
+      params.args.data?.serviceId || params.args.where?.serviceId;
+    const service = await prisma.service.findUniqueOrThrow({
+      where: { id: serviceId },
     });
+    const userId = service.userId;
 
-    return result;
+    return prisma.$transaction(async (tx) => {
+      const result = await next(params);
+
+      await recaclStats(userId, tx);
+    });
   }
   return next(params);
 });
