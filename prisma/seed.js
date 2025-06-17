@@ -330,6 +330,8 @@ async function seedCategories() {
 }
 
 async function seedServices() {
+  await prisma.service.deleteMany();
+
   const categories = await prisma.category.findMany();
   const users = await prisma.user.findMany();
 

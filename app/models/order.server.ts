@@ -75,17 +75,17 @@ export function placeOrder({
       },
     });
 
-    await tx.transaction.create({
-      data: {
-        amount: pricingTier.price,
-        type: "ESCROW_HOLD",
-        status: "COMPLETED",
-        userId: buyer.id,
-        orderId: order.id,
-        escrowAccountId: escrowAccount.id,
-        releaseDueDate,
-      },
-    });
+    // await tx.transaction.create({
+    //   data: {
+    //     amount: pricingTier.price,
+    //     type: "ESCROW_HOLD",
+    //     status: "COMPLETED",
+    //     userId: buyer.id,
+    //     orderId: order.id,
+    //     escrowAccountId: escrowAccount.id,
+    //     releaseDueDate,
+    //   },
+    // });
 
     await tx.user.update({
       data: {
