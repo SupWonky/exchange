@@ -2,52 +2,7 @@ import { Prisma, PrismaClient, User } from "@prisma/client";
 
 import { singleton } from "./singleton.server";
 
-// Hard-code a unique key, so we can look up the client when this module gets re-imported
 const prisma = singleton("prisma", () => new PrismaClient());
-
-export async function recaclStats(
-  userId: User["id"],
-  tx: Prisma.TransactionClient
-) {
-  const total = await tx.review.count({
-    where: { service: { userId } },
-  });
-
-  const recs = await tx.review.count({
-    where: { service: { userId }, recommend: true },
-  });
-
-  const averageRating = total > 0 ? (recs / total) * 5 : 0;
-
-  await tx.user.update({
-    where: { id: userId },
-    data: {
-      averageRating,
-      reviewsCount: total,
-    },
-  });
-}
-
-prisma.$use(async (params, next) => {
-  if (
-    params.model === "Review" &&
-    ["create", "update", "delete"].includes(params.action)
-  ) {
-    const serviceId =
-      params.args.data?.serviceId || params.args.where?.serviceId;
-    const service = await prisma.service.findUniqueOrThrow({
-      where: { id: serviceId },
-    });
-    const userId = service.userId;
-
-    return prisma.$transaction(async (tx) => {
-      const result = await next(params);
-
-      await recaclStats(userId, tx);
-    });
-  }
-  return next(params);
-});
 
 prisma.$use(async (params, next) => {
   if (params.model === "Service" || params.model === "User") {

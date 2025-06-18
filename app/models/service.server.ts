@@ -118,11 +118,10 @@ export async function createService({
 export async function updateService({
   id,
   title,
-  userId,
   categoryId,
   media,
   description,
-}: Pick<Service, "id" | "title" | "userId" | "categoryId" | "description"> & {
+}: Pick<Service, "id" | "title" | "categoryId" | "description"> & {
   media?: { url: Media["url"]; type: Media["type"]; name?: Media["name"] }[];
 }) {
   const slug = formatSlug(title);
@@ -142,7 +141,6 @@ export async function updateService({
     data: {
       slug,
       title,
-      userId,
       categoryId,
       description,
       media: {

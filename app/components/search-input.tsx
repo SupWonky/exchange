@@ -37,7 +37,7 @@ export function SearchInput() {
         <Input
           name="q"
           ref={inputRef}
-          type="search"
+          type="text"
           placeholder="Найти услугу..."
           className="h-8 px-10 py-2"
           aria-label="Search services"

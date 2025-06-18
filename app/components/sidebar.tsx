@@ -24,59 +24,11 @@ interface NavSubmenu extends NavItemBase {
 
 type NavItem = NavLink | NavSubmenu;
 
-const defaultMenu: NavItem[] = [
-  {
-    type: "nested",
-    label: "Services",
-    url: "/services",
-    children: [
-      { type: "item", label: "Web Development", url: "/services/web-dev" },
-      { type: "item", label: "UI/UX Design", url: "/services/design" },
-      {
-        type: "nested",
-        label: "Mobile Apps",
-        url: "/services/mobile-apps",
-        children: [
-          {
-            type: "item",
-            label: "iOS Development",
-            url: "/services/mobile-apps/ios",
-          },
-          {
-            type: "item",
-            label: "Android Development",
-            url: "/services/mobile-apps/android",
-          },
-          {
-            type: "item",
-            label: "Cross-platform",
-            url: "/services/mobile-apps/cross-platform",
-          },
-        ],
-      },
-      { type: "item", label: "Cloud Solutions", url: "/services/cloud" },
-    ],
-  },
-  { type: "item", label: "About Us", url: "/about" },
-  { type: "item", label: "Portfolio", url: "/portfolio" },
-  {
-    type: "nested",
-    label: "Resources",
-    url: "/resources",
-    children: [
-      { type: "item", label: "Blog", url: "/resources/blog" },
-      { type: "item", label: "Case Studies", url: "/resources/case-studies" },
-      { type: "item", label: "Guides", url: "/resources/guides" },
-    ],
-  },
-  { type: "item", label: "Contact", url: "/contact" },
-];
-
 export function Sidebar({
-  items = defaultMenu,
+  items,
   className,
 }: {
-  items?: NavItem[];
+  items: NavItem[];
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -166,7 +118,6 @@ function SidebarItem({ item, onOpenChange }: SidebarItemProps) {
         to={item.url}
         onOpenChange={onOpenChange}
         className="flex w-full py-3 px-4 border-b border-border hover:bg-accent font-semibold text-sm transition-colors"
-        onClick={() => onOpenChange(false)}
       >
         {item.label}
       </MobileLink>
@@ -222,7 +173,7 @@ function MobileLink({
   ...props
 }: MobileLinkProps) {
   return (
-    <Link to={to} className={cn("block", className)} {...props}>
+    <Link to={to} className={cn("block", className)} {...props}  onClick={() => onOpenChange(false)}>
       {children}
     </Link>
   );

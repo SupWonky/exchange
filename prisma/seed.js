@@ -6,7 +6,6 @@ import { createId } from "@paralleldrive/cuid2";
 import { formatSlug } from "~/lib/utils";
 import { placeOrder } from "~/models/order.server";
 import { parseArgs, sleep } from "./utils";
-import { recaclStats } from "~/db.server";
 
 const prisma = new PrismaClient();
 
@@ -35,7 +34,7 @@ async function seed() {
       name: "machine",
       email: "rachel@remix.run",
       password: { create: { hash: rachelPassword } },
-      balance: 1550000,
+      balance: 155000,
       avatar: {
         create: {
           type: "IMAGE",
@@ -50,7 +49,7 @@ async function seed() {
       name: "megajhon",
       email: "john@example.com",
       password: { create: { hash: johnPassword } },
-      balance: 1500000,
+      balance: 150000,
       avatar: {
         create: {
           type: "IMAGE",
@@ -65,7 +64,7 @@ async function seed() {
       name: "emma",
       email: "emma@example.com",
       password: { create: { hash: emmaPassword } },
-      balance: 1500000,
+      balance: 150000,
       avatar: {
         create: {
           type: "IMAGE",

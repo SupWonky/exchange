@@ -4,7 +4,7 @@ import {
   unstable_createFileUploadHandler,
   unstable_composeUploadHandlers,
 } from "@remix-run/node";
-import type { NodeOnDiskFile, ActionFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "@remix-run/node";
 import { useFetcher } from "@remix-run/react";
 import { parseFileType } from "~/lib/utils";
 
@@ -24,7 +24,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     )
   );
 
-  const files = formData.getAll("file") as NodeOnDiskFile[];
+  const files = formData.getAll("file") as File[];
 
   return {
     files: files.map((file) => ({
