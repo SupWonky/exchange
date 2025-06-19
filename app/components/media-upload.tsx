@@ -54,7 +54,9 @@ export function MediaUpload({ name, defualtValue }: MediaUploadProps) {
   }
 
   useEffect(() => {
-    add(files);
+    if (files.length > 0) {
+      add(files);
+    }
   }, [files]);
 
   return (

@@ -10,7 +10,11 @@ import { MediaUpload } from "~/components/media-upload";
 import { TextInput } from "~/components/text-input";
 import { Button } from "~/components/ui/button";
 import { CategoryNode, getCategoriesTree } from "~/models/category.server";
-import { createService, getServiceById, updateService } from "~/models/service.server";
+import {
+  createService,
+  getServiceById,
+  updateService,
+} from "~/models/service.server";
 import { getUser, getUserId, requireUserId } from "~/session.server";
 import { Textarea } from "~/components/ui/textarea";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
@@ -24,7 +28,7 @@ import { Label } from "~/components/ui/label";
 import { ServiceSchema } from "~/constants/schemas";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const userId = await requireUserId(request)
+  const userId = await requireUserId(request);
 
   const formData = await request.formData();
   const submission = parseWithZod(formData, { schema: ServiceSchema });
@@ -33,17 +37,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return submission.reply();
   }
 
-  const url = new URL(request.url)
+  const url = new URL(request.url);
   const id = url.searchParams.get("id");
   const { title, categoryId, content, media } = submission.value;
 
-  
   let service = undefined;
   if (id) {
-    service = await getServiceById(id)
+    service = await getServiceById(id);
 
     if (!service) {
-      throw new Response('Not Found', {status: 404})
+      throw new Response("Not Found", { status: 404 });
     }
 
     await updateService({
@@ -52,7 +55,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       categoryId,
       description: content,
       media,
-    })
+    });
   } else {
     service = await createService({
       title,
@@ -63,6 +66,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
+  console.log(service);
 
   return redirect(`/services/new/step-2?id=${service.id}`);
 };

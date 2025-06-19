@@ -60,6 +60,7 @@ function CategoryItem({ category }: { category: CategoryNode }) {
               "py-2 block group-hover:text-primary relative transition-colors",
               open && "text-primary"
             )}
+            prefetch="intent"
           >
             {category.name}
             <span
@@ -94,6 +95,7 @@ function CategoryItem({ category }: { category: CategoryNode }) {
                     tabIndex={-1}
                     className="block py-2 px-3 rounded-md hover:bg-gray-50 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors duration-150 text-sm break-words"
                     onClick={() => setOpen(false)}
+                    prefetch="intent"
                   >
                     {child.name}
                   </Link>
@@ -110,6 +112,7 @@ function CategoryItem({ category }: { category: CategoryNode }) {
         to={`/categories/${category.slug}`}
         className="py-2 px-4 block group-hover:text-primary relative transition-colors whitespace-nowrap"
         onClick={() => setOpen(false)}
+        prefetch="intent"
       >
         {category.name}
         <span className="absolute left-0 bottom-0 w-full h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left" />

@@ -16,6 +16,9 @@ export async function getServiceListByUser({
       status,
     },
     include: { media: true, user: true, pricingTier: true },
+    orderBy: {
+      updatedAt: "desc",
+    },
   });
 }
 

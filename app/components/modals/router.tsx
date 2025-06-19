@@ -31,7 +31,15 @@ export const ModalRouter: React.FC<ModalRouterProps> = ({
   children,
   param = "modal",
 }) => {
-  const { open, setOpen, direction, canGoBack, goBack } = useModal();
+  const {
+    open,
+    setOpen,
+    direction,
+    canGoBack,
+    goBack,
+    currentModal,
+    closeModal,
+  } = useModal();
   const childProps =
     React.Children.map(children, (child) => {
       if (!React.isValidElement(child)) return;
@@ -42,19 +50,12 @@ export const ModalRouter: React.FC<ModalRouterProps> = ({
     {}
   ) as unknown as KeyedRoutes;
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const modalParam = searchParams.get(param) || "";
+  const modalParam = currentModal || "";
   const Route = keyedRoutes[modalParam];
-
-  const onClose = () => {
-    const params = new URLSearchParams(searchParams);
-    params.delete("modal");
-    setSearchParams(params);
-  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent onCloseAutoFocus={onClose}>
+      <DialogContent onCloseAutoFocus={closeModal}>
         <div className="flex items-center justify-between px-4 sm:px-6 h-[var(--header-height)]">
           {canGoBack && (
             <button

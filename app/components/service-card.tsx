@@ -37,6 +37,7 @@ export function ServiceCard({
           to={url}
           target="_blank"
           className="block overflow-hidden aspect-[5/3]"
+          prefetch="intent"
         >
           <img
             src={imageUrl}
@@ -51,7 +52,13 @@ export function ServiceCard({
       </div>
 
       <CardHeader className="px-4 py-3 border-b h-[73px]">
-        <Link to={url} target="_blank" rel="noreferrer" className="block">
+        <Link
+          to={url}
+          target="_blank"
+          rel="noreferrer"
+          className="block"
+          prefetch="intent"
+        >
           <h3 className="text-base line-clamp-2 text-ellipsis">{title}</h3>
         </Link>
       </CardHeader>

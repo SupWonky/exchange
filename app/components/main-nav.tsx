@@ -4,7 +4,7 @@ import { siteConfig } from "~/config/site";
 export function MainNav() {
   return (
     <div className="hidden lg:flex">
-      <Link to="/" className="mr-6 flex items-center">
+      <Link to="/" className="mr-6 flex items-center" prefetch="intent">
         <span className="hidden text-xl font-bold sm:inline-block">
           {siteConfig.name}
         </span>

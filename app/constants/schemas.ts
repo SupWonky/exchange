@@ -45,7 +45,7 @@ const ServiceSchema = z.object({
     z
       .array(
         z.object({
-          name: z.string(),
+          name: z.string().nullable(),
           url: z.string(),
           type: z.enum(["MOVIE", "IMAGE"]),
         })
@@ -67,7 +67,7 @@ const MessageSchema = z.object({
     },
     z.array(
       z.object({
-        name: z.string(),
+        name: z.string().nullable(),
         url: z.string(),
         type: z.enum(["MOVIE", "IMAGE", "OTHER"]),
       })

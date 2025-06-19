@@ -24,6 +24,7 @@ export default function Index() {
               className="group focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-xl overflow-hidden shadow-lg border"
               key={category.id}
               to={`/categories/${category.slug}`}
+              prefetch="intent"
             >
               <div className="aspect-square relative">
                 {/* Image */}

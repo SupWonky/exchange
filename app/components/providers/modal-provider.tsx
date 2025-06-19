@@ -1,4 +1,4 @@
-import { useSearchParams } from "@remix-run/react";
+import { useLocation } from "@remix-run/react";
 import React from "react";
 
 type Direction = "back" | "forward";
@@ -11,6 +11,7 @@ interface ModalContextValues {
   direction?: Direction;
   canGoBack: boolean;
   goBack: () => void;
+  currentModal: string | null;
 }
 
 const ModalContext = React.createContext<ModalContextValues | undefined>(
@@ -18,11 +19,13 @@ const ModalContext = React.createContext<ModalContextValues | undefined>(
 );
 
 export function ModalProvider({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
   const [history, setHistory] = React.useState<string[]>([]);
-  const [searchParams, setSearchParams] = useSearchParams();
   const [direction, setDirection] = React.useState<Direction>();
 
-  const currentModal = searchParams.get("modal");
+  const [currentModal, setCurrentModal] = React.useState<string | null>(
+    location.hash
+  );
   const [open, setOpen] = React.useState(Boolean(currentModal));
   const canGoBack = history.length > 1;
 
@@ -35,22 +38,18 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currentModal]);
 
-  const setModal = React.useCallback(
-    (name: string) => {
-      const params = new URLSearchParams(searchParams);
-      params.set("modal", name);
-      setSearchParams(params, { preventScrollReset: true });
-      setHistory((prev) => [...prev, name]);
-      setDirection("forward");
-    },
-    [searchParams, setSearchParams]
-  );
+  const setModal = React.useCallback((name: string) => {
+    setCurrentModal(name);
+    setHistory((prev) => [...prev, name]);
+    setDirection("forward");
+
+    window.location.hash = name;
+  }, []);
 
   const closeModal = React.useCallback(() => {
-    const params = new URLSearchParams(searchParams);
-    params.delete("modal");
-    setSearchParams(params, { preventScrollReset: true });
-  }, [searchParams, setSearchParams]);
+    setCurrentModal(null);
+    window.location.hash = "";
+  }, []);
 
   const goBack = React.useCallback(() => {
     if (history.length <= 1) return;
@@ -58,17 +57,12 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
     const newHistory = history.slice(0, -1);
     const prevModal = newHistory[newHistory.length - 1];
 
-    const params = new URLSearchParams(searchParams);
-    if (prevModal) {
-      params.set("modal", prevModal);
-    } else {
-      params.delete("modal");
-    }
-    setSearchParams(params, { preventScrollReset: true });
+    setCurrentModal(prevModal);
+    window.location.hash = prevModal;
 
     setHistory(newHistory);
     setDirection("back");
-  }, [history, searchParams, setSearchParams]);
+  }, [history]);
 
   return (
     <ModalContext.Provider
@@ -80,6 +74,7 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
         canGoBack,
         goBack,
         direction,
+        currentModal,
       }}
     >
       {children}

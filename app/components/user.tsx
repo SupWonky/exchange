@@ -59,6 +59,7 @@ export function User() {
                   isActive ? "text-indigo-500" : ""
                 } hover:text-indigo-500`
               }
+              prefetch="intent"
               key={idx}
             >
               {link.label}
