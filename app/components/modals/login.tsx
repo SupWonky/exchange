@@ -74,12 +74,12 @@ export function LoginDialog() {
         </Button>
 
         <div className="flex justify-between items-center">
-          <div className="flex flex-row items-center gap-2">
+          <div className="flex items-end gap-2">
             <CheckboxConform meta={fields.remember} />
 
             <Label
               htmlFor={fields.remember.id}
-              className="block text-sm text-gray-900"
+              className="block text-sm leading-none text-gray-900"
             >
               Запомнить
             </Label>

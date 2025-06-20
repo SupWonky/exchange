@@ -1,4 +1,4 @@
-import { useLocation } from "@remix-run/react";
+import { useLocation, useNavigate } from "@remix-run/react";
 import React from "react";
 
 type Direction = "back" | "forward";
@@ -19,6 +19,7 @@ const ModalContext = React.createContext<ModalContextValues | undefined>(
 );
 
 export function ModalProvider({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate();
   const location = useLocation();
   const [history, setHistory] = React.useState<string[]>([]);
   const [direction, setDirection] = React.useState<Direction>();
@@ -28,6 +29,10 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
   );
   const [open, setOpen] = React.useState(Boolean(currentModal));
   const canGoBack = history.length > 1;
+
+  React.useEffect(() => {
+    console.log(direction);
+  }, [direction]);
 
   React.useEffect(() => {
     if (currentModal) {
@@ -43,12 +48,13 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
     setHistory((prev) => [...prev, name]);
     setDirection("forward");
 
-    window.location.hash = name;
+    window.history.pushState(null, "", `#${name}`);
   }, []);
 
   const closeModal = React.useCallback(() => {
     setCurrentModal(null);
-    window.location.hash = "";
+
+    window.history.pushState(null, "", location.pathname + location.search);
   }, []);
 
   const goBack = React.useCallback(() => {
@@ -58,7 +64,7 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
     const prevModal = newHistory[newHistory.length - 1];
 
     setCurrentModal(prevModal);
-    window.location.hash = prevModal;
+    window.history.pushState(null, "", `#${prevModal}`);
 
     setHistory(newHistory);
     setDirection("back");

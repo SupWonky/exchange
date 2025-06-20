@@ -1,4 +1,3 @@
-import { useSearchParams } from "@remix-run/react";
 import React from "react";
 import { Dialog, DialogClose, DialogContent } from "../ui/dialog";
 import { useModal } from "../providers/modal-provider";
@@ -27,10 +26,7 @@ const variants = {
   }),
 };
 
-export const ModalRouter: React.FC<ModalRouterProps> = ({
-  children,
-  param = "modal",
-}) => {
+export const ModalRouter: React.FC<ModalRouterProps> = ({ children }) => {
   const {
     open,
     setOpen,
@@ -70,7 +66,7 @@ export const ModalRouter: React.FC<ModalRouterProps> = ({
             <Cross1Icon className="h-5 w-5" />
           </DialogClose>
         </div>
-        <AnimatePresence initial={false} mode="wait">
+        <AnimatePresence initial={false} mode="wait" custom={direction}>
           <motion.div
             key={modalParam}
             variants={variants}
