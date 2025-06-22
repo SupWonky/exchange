@@ -8,14 +8,14 @@ import { Edit2, Trash2, Plus, Image as ImageIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
-import { deleteService, getServiceListByUser } from "~/models/service.server";
+import { serviceManager } from "~/models/service.server";
 import { getUser } from "~/session.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUser(request);
   if (!user) return redirect("/login?redirectTo=/services");
 
-  const draftServices = await getServiceListByUser({
+  const draftServices = await serviceManager.getServiceListByUser({
     userId: user.id,
     status: "DRAFT",
   });
@@ -33,7 +33,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (typeof serviceId !== "string" || serviceId.length === 0) {
         return new Response("Invalid serivce", { status: 400 });
       }
-      await deleteService(serviceId);
+      await serviceManager.deleteService(serviceId);
 
       return { success: true };
     }

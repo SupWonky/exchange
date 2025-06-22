@@ -1,12 +1,11 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { Outlet, useLoaderData } from "@remix-run/react";
-import { CategoryMenu } from "~/components/category-menu";
 import { Footer } from "~/components/footer";
 import { SiteHeader } from "~/components/header";
-import { getCategoriesTree } from "~/models/category.server";
+import { categoryManager } from "~/models/category.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const categories = await getCategoriesTree();
+  const categories = await categoryManager.getCategoriesTree();
 
   return { categories: categories };
 };

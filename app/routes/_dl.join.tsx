@@ -3,10 +3,10 @@ import type {
   LoaderFunctionArgs,
   MetaFunction,
 } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 
-import { createUser, getUserByEmail } from "~/models/user.server";
+import { users } from "~/models/user.server";
 import { createUserSession, getUserId } from "~/session.server";
 import { safeRedirect } from "~/utils";
 import { parseWithZod } from "@conform-to/zod";
@@ -26,7 +26,8 @@ import { JoinSchema } from "~/constants/schemas";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
   if (userId) return redirect("/");
-  return json({});
+
+  return {};
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -40,14 +41,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { email, password, username, redirectTo } = submission.value;
   const redirectToSafe = safeRedirect(redirectTo, "/");
 
-  const existingUser = await getUserByEmail(email);
+  const existingUser = await users.getUserByEmail(email);
   if (existingUser) {
     return submission.reply({
       formErrors: ["Почта уже занята"],
     });
   }
 
-  const user = await createUser(email, username, password);
+  const user = await users.createUser(email, username, password);
 
   return createUserSession({
     redirectTo: redirectToSafe,

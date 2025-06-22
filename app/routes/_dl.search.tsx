@@ -1,6 +1,6 @@
 import { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { getServiceListItems } from "~/models/service.server";
+import { serviceManager } from "~/models/service.server";
 import { ServiceList } from "~/components/service-list";
 import { ConfigurableFilter, FilterSectionType } from "~/components/filters";
 import { siteConfig } from "~/config/site";
@@ -13,7 +13,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const minReviews = Number(searchParams.get("sminreviews") ?? 0);
   const sortSlug = searchParams.get("sort") ?? undefined;
 
-  const [items, totalCount] = await getServiceListItems({
+  const [items, totalCount] = await serviceManager.getServiceListItems({
     query: query,
     filters: {
       service: {

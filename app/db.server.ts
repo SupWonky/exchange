@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient, User } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 import { singleton } from "./singleton.server";
 

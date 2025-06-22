@@ -4,7 +4,7 @@ import {
   redirect,
 } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
-import { getServiceById, updateServiceStatus } from "~/models/service.server";
+import { serviceManager } from "~/models/service.server";
 import {
   createPricings,
   getPricingListByService,
@@ -39,7 +39,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return redirect("/services/new");
   }
 
-  const service = await getServiceById(id);
+  const service = await serviceManager.getServiceById(id);
   if (!service) {
     return redirect("/services/new");
   }
@@ -76,7 +76,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (service.status !== "PUBLISHED") {
-    await updateServiceStatus({ id: service.id, status: "PUBLISHED" });
+    await serviceManager.updateServiceStatus({
+      id: service.id,
+      status: "PUBLISHED",
+    });
   }
 
   return redirect(`/services/${service.slug}`);

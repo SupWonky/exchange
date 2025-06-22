@@ -5,7 +5,7 @@ import {
   MetaFunction,
   redirect,
 } from "@remix-run/node";
-import { Form, useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
+import { Form, useLoaderData, useNavigate } from "@remix-run/react";
 import { Check, Clock, Infinity } from "lucide-react";
 import invariant from "tiny-invariant";
 import { CategoryBreadcrumbs } from "~/components/category-breadcrumbs";
@@ -14,10 +14,10 @@ import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { getCategoryTree } from "~/models/category.server";
+import { categoryManager } from "~/models/category.server";
 import { placeOrder } from "~/models/order.server";
 import { getPricing } from "~/models/pricing.server";
-import { getServiceBySlug } from "~/models/service.server";
+import { serviceManager } from "~/models/service.server";
 import { getUser, requireUser } from "~/session.server";
 import { formatRating, getPricingVariantLabel } from "~/utils";
 import { SellerInfo } from "./seller-info";
@@ -29,13 +29,15 @@ import { useMarkAsView } from "~/hooks/use-mark-as-view";
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   invariant(params.slug, "Slug not found");
 
-  const service = await getServiceBySlug(params.slug);
+  const service = await serviceManager.getServiceBySlug(params.slug);
 
   if (!service) {
     throw new Response("Not Found", { status: 404 });
   }
 
-  const categoryTree = await getCategoryTree({ path: service.category.path });
+  const categoryTree = await categoryManager.getCategoryTree({
+    path: service.category.path,
+  });
   const user = await getUser(request);
 
   return { service, categoryTree, user };

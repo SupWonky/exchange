@@ -3,27 +3,20 @@ import {
   MetaFunction,
   MetaDescriptor,
 } from "@remix-run/node";
-import {
-  Link,
-  ShouldRevalidateFunctionArgs,
-  useLoaderData,
-} from "@remix-run/react";
+import { Link, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 import { CategoryBreadcrumbs } from "~/components/category-breadcrumbs";
 import { ConfigurableFilter, FilterSectionType } from "~/components/filters";
 import { ServiceList } from "~/components/service-list";
 import { SortFilter } from "~/components/sort-filter";
 import { siteConfig } from "~/config/site";
-import {
-  getCategoryTree,
-  getCategoryWithChildren,
-} from "~/models/category.server";
-import { getServiceListItems } from "~/models/service.server";
+import { categoryManager } from "~/models/category.server";
+import { serviceManager } from "~/models/service.server";
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   invariant(params.slug, "Slug not found");
 
-  const category = await getCategoryWithChildren({
+  const category = await categoryManager.getCategoryWithChildren({
     slug: params.slug,
   });
 
@@ -31,7 +24,9 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     throw new Response("Not Found", { status: 404 });
   }
 
-  const categoryTree = await getCategoryTree({ path: category.path });
+  const categoryTree = await categoryManager.getCategoryTree({
+    path: category.path,
+  });
 
   if (category.parent) {
     const searchParams = new URL(request.url).searchParams;
@@ -42,7 +37,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     const orderQueueParam = searchParams.get("sorderqueue");
     const orderQueue = orderQueueParam ? Number(orderQueueParam) : undefined;
 
-    const [items, totalCount] = await getServiceListItems({
+    const [items, totalCount] = await serviceManager.getServiceListItems({
       categoryId: category.id,
       filters: {
         service: {

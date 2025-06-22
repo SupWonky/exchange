@@ -6,7 +6,7 @@ import type {
 import { data, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 
-import { verifyLogin } from "~/models/user.server";
+import { users } from "~/models/user.server";
 import { createUserSession, getUserId } from "~/session.server";
 import { safeRedirect } from "~/utils";
 import { parseWithZod } from "@conform-to/zod";
@@ -26,8 +26,8 @@ import { LoginSchema } from "~/constants/schemas";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
-  console.log(userId);
   if (userId) return redirect("/");
+
   return {};
 };
 
@@ -40,7 +40,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const { redirectTo, email, password, remember } = submission.value;
-  const user = await verifyLogin(email, password);
+  const user = await users.verifyLogin(email, password);
 
   if (!user) {
     return submission.reply({

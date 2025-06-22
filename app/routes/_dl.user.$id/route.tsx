@@ -1,8 +1,8 @@
 import { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { getServiceListByUser } from "~/models/service.server";
-import { getUserById } from "~/models/user.server";
+import { serviceManager } from "~/models/service.server";
+import { users } from "~/models/user.server";
 import { ProfileCard, ReviewCard } from "./profile";
 import { ServiceCard } from "~/components/service-card";
 import { getReviewsForUser } from "~/models/review.server";
@@ -14,13 +14,13 @@ import { Button } from "~/components/ui/button";
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   invariant(params.id, "Not Found");
 
-  const user = await getUserById(params.id);
+  const user = await users.getUserById(params.id);
 
   if (!user) {
     throw new Response("Not Found", { status: 404 });
   }
 
-  const services = await getServiceListByUser({
+  const services = await serviceManager.getServiceListByUser({
     userId: user.id,
     status: "PUBLISHED",
   });

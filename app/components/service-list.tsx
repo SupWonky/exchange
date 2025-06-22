@@ -5,7 +5,7 @@ import { ServiceCard } from "./service-card";
 import { Loader2 } from "lucide-react";
 import { Media, PricingTier, Service, User, UserInfo } from "@prisma/client";
 import { formatRating } from "~/utils";
-import { loader } from "~/routes/feed";
+import { loader } from "~/routes/api.v1.feed";
 
 type ServiceListProps = (
   | { categoryId: string; query?: never }
@@ -80,7 +80,7 @@ export function ServiceList({
 
     params.set("cursor", cursor);
 
-    fetcher.load(`/feed?${params.toString()}`);
+    fetcher.load(`/api/v1/feed?${params.toString()}`);
   }
 
   return (

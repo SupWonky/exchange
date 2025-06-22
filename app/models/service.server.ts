@@ -1,221 +1,248 @@
-import { Category, Media, Prisma, Service, User } from "@prisma/client";
+import {
+  Category,
+  Media,
+  Prisma,
+  PrismaClient,
+  Service,
+  User,
+} from "@prisma/client";
 import { prisma } from "~/db.server";
-import { SortFilterItem, sorting } from "~/lib/constants";
+import { Cache } from "~/lib/cache/decorator";
+import { CacheManager } from "~/lib/cache/manager";
+import { sorting } from "~/lib/constants";
 import { formatSlug } from "~/lib/utils";
 
-export async function getServiceListByUser({
-  userId,
-  status,
-}: {
-  userId: User["id"];
-  status?: Service["status"];
-}) {
-  return prisma.service.findMany({
-    where: {
-      userId,
-      status,
-    },
-    include: { media: true, user: true, pricingTier: true },
-    orderBy: {
-      updatedAt: "desc",
-    },
-  });
-}
+class ServiceManager {
+  constructor(private readonly prismaService: PrismaClient["service"]) {}
 
-export async function getServiceListItems({
-  cursor,
-  categoryId,
-  query,
-  filters,
-  sortSlug,
-}: {
-  cursor?: string;
-  categoryId?: Category["id"];
-  query?: string;
-  filters?: Prisma.ServiceInfoWhereInput;
-  sortSlug?: string;
-}) {
-  const andFilters: Prisma.ServiceInfoWhereInput[] = [];
-  let orderBy: Prisma.ServiceInfoOrderByWithRelationInput = {};
-
-  if (categoryId) {
-    andFilters.push({
-      service: {
+  @Cache(["services"], (id) => id)
+  async getServiceById(id: Service["id"]) {
+    return prisma.service.findUnique({
+      where: { id },
+      include: {
+        media: true,
         category: {
-          path: { startsWith: `%${categoryId}` },
+          include: { children: true },
+        },
+        pricingTier: true,
+      },
+    });
+  }
+
+  @Cache(["services"], (slug) => slug)
+  async getServiceBySlug(slug: Service["slug"]) {
+    return prisma.service.findFirst({
+      where: {
+        slug,
+      },
+      include: {
+        reviews: true,
+        user: { include: { userInfo: true, avatar: true } },
+        media: true,
+        category: true,
+        pricingTier: {
+          include: {
+            options: true,
+          },
         },
       },
     });
   }
 
-  if (filters) {
-    andFilters.push(filters);
+  @Cache(["services"])
+  async getServiceListByUser({
+    userId,
+    status,
+  }: {
+    userId: User["id"];
+    status?: Service["status"];
+  }) {
+    return this.prismaService.findMany({
+      where: {
+        userId,
+        status,
+      },
+      include: { media: true, user: true, pricingTier: true },
+      orderBy: {
+        updatedAt: "desc",
+      },
+    });
   }
 
-  if (query) {
-    orderBy._relevance = {
-      fields: ["title", "description", "requiredInfo"],
-      search: query,
-      sort: "desc",
-    };
-  } else {
-    const sort = sorting.find((item) => item.slug === sortSlug);
+  async getServiceListItems({
+    cursor,
+    categoryId,
+    query,
+    filters,
+    sortSlug,
+  }: {
+    cursor?: string;
+    categoryId?: Category["id"];
+    query?: string;
+    filters?: Prisma.ServiceInfoWhereInput;
+    sortSlug?: string;
+  }) {
+    const andFilters: Prisma.ServiceInfoWhereInput[] = [];
+    let orderBy: Prisma.ServiceInfoOrderByWithRelationInput = {};
 
-    switch (sort?.sort_key) {
-      case "LATEST":
-        orderBy = { service: { createdAt: "desc" } };
-        break;
-      default:
-        orderBy = { service: { views: "desc" } };
-        break;
-    }
-  }
-
-  return Promise.all([
-    prisma.serviceInfo.findMany({
-      include: {
+    if (categoryId) {
+      andFilters.push({
         service: {
-          include: {
-            media: true,
-            user: { include: { userInfo: true, avatar: true } },
-            pricingTier: { where: { variant: "BASIC" } },
+          category: {
+            path: { startsWith: `%${categoryId}` },
           },
         },
-      },
-      where: { AND: andFilters },
-      take: 6,
-      orderBy,
-      ...(cursor ? { cursor: { serviceId: cursor }, skip: 1 } : {}),
-    }),
-    prisma.serviceInfo.count({
-      where: { AND: andFilters },
-    }),
-  ]);
-}
+      });
+    }
 
-export async function createService({
-  title,
-  userId,
-  categoryId,
-  media,
-  description,
-}: Pick<Service, "title" | "userId" | "categoryId" | "description"> & {
-  media?: { url: Media["url"]; type: Media["type"]; name?: Media["name"] }[];
-}) {
-  const slug = formatSlug(title);
+    if (filters) {
+      andFilters.push(filters);
+    }
 
-  return prisma.service.create({
-    data: {
-      slug,
-      title,
-      userId,
-      categoryId,
-      description,
-      media: {
-        create: media,
-      },
-    },
-  });
-}
+    if (query) {
+      orderBy._relevance = {
+        fields: ["title", "description", "requiredInfo"],
+        search: query,
+        sort: "desc",
+      };
+    } else {
+      const sort = sorting.find((item) => item.slug === sortSlug);
 
-export async function updateService({
-  id,
-  title,
-  categoryId,
-  media,
-  description,
-}: Pick<Service, "id" | "title" | "categoryId" | "description"> & {
-  media?: { url: Media["url"]; type: Media["type"]; name?: Media["name"] }[];
-}) {
-  const slug = formatSlug(title);
+      switch (sort?.sort_key) {
+        case "LATEST":
+          orderBy = { service: { createdAt: "desc" } };
+          break;
+        default:
+          orderBy = { service: { views: "desc" } };
+          break;
+      }
+    }
 
-  await prisma.service.update({
-    data: {
-      media: {
-        deleteMany: {},
-      },
-    },
-    where: {
-      id,
-    },
-  });
-
-  return prisma.service.update({
-    data: {
-      slug,
-      title,
-      categoryId,
-      description,
-      media: {
-        create: media,
-      },
-    },
-    where: {
-      id,
-    },
-  });
-}
-
-export async function updateServiceStatus({
-  id,
-  status,
-}: {
-  id: Service["id"];
-  status: Service["status"];
-}) {
-  return prisma.service.update({
-    data: {
-      status,
-    },
-    where: { id },
-  });
-}
-
-export async function getServiceBySlug(slug: Service["slug"]) {
-  return prisma.service.findFirst({
-    where: { slug },
-    include: {
-      reviews: true,
-      user: { include: { userInfo: true, avatar: true } },
-      media: true,
-      category: true,
-      pricingTier: {
+    return Promise.all([
+      prisma.serviceInfo.findMany({
         include: {
-          options: true,
+          service: {
+            include: {
+              media: true,
+              user: { include: { userInfo: true, avatar: true } },
+              pricingTier: { where: { variant: "BASIC" } },
+            },
+          },
+        },
+        where: { AND: andFilters },
+        take: 6,
+        orderBy,
+        ...(cursor ? { cursor: { serviceId: cursor }, skip: 1 } : {}),
+      }),
+      prisma.serviceInfo.count({
+        where: { AND: andFilters },
+      }),
+    ]);
+  }
+
+  async createService({
+    title,
+    userId,
+    categoryId,
+    media,
+    description,
+  }: Pick<Service, "title" | "userId" | "categoryId" | "description"> & {
+    media?: { url: Media["url"]; type: Media["type"]; name?: Media["name"] }[];
+  }) {
+    CacheManager.revalidateTag("services");
+    const slug = formatSlug(title);
+
+    return this.prismaService.create({
+      data: {
+        slug,
+        title,
+        userId,
+        categoryId,
+        description,
+        media: {
+          create: media,
         },
       },
-    },
-  });
-}
+    });
+  }
 
-export async function getServiceById(id: Service["id"]) {
-  return prisma.service.findFirst({
-    where: { id },
-    include: {
-      media: true,
-      category: {
-        include: {
-          children: true,
+  async updateService({
+    id,
+    title,
+    categoryId,
+    media,
+    description,
+  }: Pick<Service, "id" | "title" | "categoryId" | "description"> & {
+    media?: { url: Media["url"]; type: Media["type"]; name?: Media["name"] }[];
+  }) {
+    CacheManager.revalidateTag("services");
+
+    const slug = formatSlug(title);
+
+    await this.prismaService.update({
+      data: {
+        media: {
+          deleteMany: {},
         },
       },
-      pricingTier: true,
-    },
-  });
+      where: {
+        id,
+      },
+    });
+
+    return this.prismaService.update({
+      data: {
+        slug,
+        title,
+        categoryId,
+        description,
+        media: {
+          create: media,
+        },
+      },
+      where: {
+        id,
+      },
+    });
+  }
+
+  async updateServiceStatus({
+    id,
+    status,
+  }: {
+    id: Service["id"];
+    status: Service["status"];
+  }) {
+    CacheManager.revalidateTag("services");
+
+    return this.prismaService.update({
+      data: {
+        status,
+      },
+      where: { id },
+    });
+  }
+
+  async deleteService(id: Service["id"]) {
+    CacheManager.revalidateTag("services");
+
+    return this.prismaService.delete({
+      where: { id },
+    });
+  }
+
+  async view(id: Service["id"]) {
+    CacheManager.revalidateTag("services");
+
+    return this.prismaService.update({
+      where: { id },
+      data: {
+        views: { increment: 1 },
+      },
+    });
+  }
 }
 
-export async function deleteService(id: Service["id"]) {
-  return prisma.service.delete({
-    where: {
-      id,
-    },
-  });
-}
+const serviceManager = new ServiceManager(prisma.service);
 
-export async function viewService(id: Service["id"]) {
-  return prisma.service.update({
-    where: { id },
-    data: {
-      views: { increment: 1 },
-    },
-  });
-}
+export { serviceManager };

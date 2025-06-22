@@ -9,13 +9,9 @@ import { CategorySelector } from "~/components/category-selector";
 import { MediaUpload } from "~/components/media-upload";
 import { TextInput } from "~/components/text-input";
 import { Button } from "~/components/ui/button";
-import { CategoryNode, getCategoriesTree } from "~/models/category.server";
-import {
-  createService,
-  getServiceById,
-  updateService,
-} from "~/models/service.server";
-import { getUser, getUserId, requireUserId } from "~/session.server";
+import { CategoryNode, categoryManager } from "~/models/category.server";
+import { serviceManager } from "~/models/service.server";
+import { getUserId, requireUserId } from "~/session.server";
 import { Textarea } from "~/components/ui/textarea";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
 import {
@@ -43,13 +39,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   let service = undefined;
   if (id) {
-    service = await getServiceById(id);
+    service = await serviceManager.getServiceById(id);
 
     if (!service) {
       throw new Response("Not Found", { status: 404 });
     }
 
-    await updateService({
+    await serviceManager.updateService({
       id,
       title,
       categoryId,
@@ -57,7 +53,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       media,
     });
   } else {
-    service = await createService({
+    service = await serviceManager.createService({
       title,
       categoryId,
       description: content,
@@ -65,8 +61,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       userId,
     });
   }
-
-  console.log(service);
 
   return redirect(`/services/new/step-2?id=${service.id}`);
 };
@@ -80,10 +74,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   let service = undefined;
   if (typeof id === "string" && id.length !== 0) {
-    service = await getServiceById(id);
+    service = await serviceManager.getServiceById(id);
   }
 
-  const categories = await getCategoriesTree();
+  const categories = await categoryManager.getCategoriesTree();
 
   return { categories, service };
 };

@@ -4,7 +4,7 @@ import { Edit2, ImageIcon, Plus, Trash2 } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
-import { getServiceListByUser } from "~/models/service.server";
+import { serviceManager } from "~/models/service.server";
 import { getUser } from "~/session.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -14,7 +14,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     return redirect("/login?redirectTo=/services/published");
   }
 
-  const services = await getServiceListByUser({
+  const services = await serviceManager.getServiceListByUser({
     userId: user.id,
     status: "PUBLISHED",
   });

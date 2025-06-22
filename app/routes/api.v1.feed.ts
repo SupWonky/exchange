@@ -1,13 +1,5 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
-import { ShouldRevalidateFunctionArgs } from "@remix-run/react";
-import { getServiceListItems } from "~/models/service.server";
-
-// export function shouldRevalidate({
-//   currentParams,
-//   nextParams,
-// }: ShouldRevalidateFunctionArgs) {
-//   return false;
-// }
+import { serviceManager } from "~/models/service.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
@@ -24,7 +16,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [minPrice, maxPrice] = searchParams.get("price")?.split("_") ?? [];
   const minReviews = Number(searchParams.get("sminreviews") ?? 0);
 
-  const [items] = await getServiceListItems({
+  const [items] = await serviceManager.getServiceListItems({
     cursor,
     categoryId,
     query,
@@ -45,7 +37,3 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   return items.map((item) => item.service);
 };
-
-export default function Feed() {
-  return null;
-}
