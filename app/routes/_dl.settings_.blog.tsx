@@ -5,7 +5,7 @@ import { Field, FieldError } from "~/components/field";
 import { InputConform } from "~/components/conform/input";
 import { Label } from "~/components/ui/label";
 import { ArrowLeft } from "lucide-react";
-import { updateBlog } from "~/models/user.server";
+import { users } from "~/models/user.server";
 import {
   Form,
   Link,
@@ -33,7 +33,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { username, description } = submission.value;
 
-  await updateBlog({
+  await users.updateBlog({
     id: userId,
     name: username,
     bio: description || null,
