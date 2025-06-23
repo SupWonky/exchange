@@ -29,7 +29,7 @@ async function checkProxy(proxyUrl: string, timeout = 5000): Promise<boolean> {
       socket.write(
         `CONNECT ${target.hostname}:${target.port || 80} HTTP/1.1\r\n`
       );
-      socket.write(`Host: ${target.hostname}:${target.port || 80}\r\n`);
+      socket.write(`Host: siteCon{target.hostname}:${target.port || 80}\r\n`);
       socket.write("\r\n");
     });
 

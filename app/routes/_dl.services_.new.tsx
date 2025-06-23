@@ -4,7 +4,12 @@ import {
   redirect,
 } from "@remix-run/node";
 import { useForm } from "@conform-to/react";
-import { Form, useActionData, useLoaderData } from "@remix-run/react";
+import {
+  Form,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+} from "@remix-run/react";
 import { CategorySelector } from "~/components/category-selector";
 import { MediaUpload } from "~/components/media-upload";
 import { TextInput } from "~/components/text-input";
@@ -37,15 +42,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const id = url.searchParams.get("id");
   const { title, categoryId, content, media } = submission.value;
 
-  let service = undefined;
   if (id) {
-    service = await serviceManager.getServiceById(id);
+    const service = await serviceManager.getServiceById(id);
 
     if (!service) {
       throw new Response("Not Found", { status: 404 });
     }
 
-    await serviceManager.updateService({
+    serviceManager.updateService({
       id,
       title,
       categoryId,
@@ -53,7 +57,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       media,
     });
   } else {
-    service = await serviceManager.createService({
+    serviceManager.createService({
       title,
       categoryId,
       description: content,
@@ -62,7 +66,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
-  return redirect(`/services/new/step-2?id=${service.id}`);
+  return redirect(`/services/new/step-2?id=${id}`);
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -99,6 +103,9 @@ export default function CreateServicePage() {
       })),
     },
   });
+
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state !== "idle";
 
   return (
     <div className="flex flex-1 justify-center items-start">
@@ -169,7 +176,9 @@ export default function CreateServicePage() {
               )}
             </div>
 
-            <Button>Далее</Button>
+            <Button disabled={isSubmitting}>
+              {isSubmitting ? "Обработка..." : "Далее"}
+            </Button>
           </Form>
         </CardContent>
       </Card>

@@ -1,7 +1,7 @@
 import { SubmissionResult, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { PricingTier, PricingVariant } from "@prisma/client";
-import { Form } from "@remix-run/react";
+import { Form, useNavigation } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { PricingSchema } from "~/constants/schemas";
 import { getPricingVariantLabel } from "~/utils";
@@ -52,6 +52,8 @@ export function PricingForm({
   defualtValue,
   onChangeFormErrors,
 }: PricingFormProps) {
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state !== "idle";
   const variants =
     mode === "single"
       ? [PricingVariant.BASIC]
@@ -90,8 +92,6 @@ export function PricingForm({
   useEffect(() => {
     onChangeFormErrors?.(form.errors);
   }, [form.errors, onChangeFormErrors]);
-
-  // Handle adding a new option
 
   return (
     <Form method="post" className="flex flex-col gap-y-4" id={form.id}>
@@ -325,7 +325,9 @@ export function PricingForm({
         );
       })}
 
-      <Button type="submit">Отправить</Button>
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Отправляю..." : "Отправить"}
+      </Button>
     </Form>
   );
 }

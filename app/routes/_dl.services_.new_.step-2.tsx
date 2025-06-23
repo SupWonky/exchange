@@ -3,7 +3,7 @@ import {
   LoaderFunctionArgs,
   redirect,
 } from "@remix-run/node";
-import { useActionData, useLoaderData } from "@remix-run/react";
+import { useActionData, useLoaderData, useNavigation } from "@remix-run/react";
 import { serviceManager } from "~/models/service.server";
 import {
   createPricings,
@@ -36,12 +36,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const id = url.searchParams.get("id");
 
   if (!id) {
-    return redirect("/services/new");
+    throw new Response("Not Found", { status: 404 });
   }
 
   const service = await serviceManager.getServiceById(id);
   if (!service) {
-    return redirect("/services/new");
+    throw new Response("Not Found", { status: 404 });
   }
 
   const { pricingVariants, mode } = submission.value;

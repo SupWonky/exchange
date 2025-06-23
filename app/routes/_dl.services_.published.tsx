@@ -1,4 +1,8 @@
-import { LoaderFunctionArgs, redirect } from "@remix-run/node";
+import {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  redirect,
+} from "@remix-run/node";
 import { Form, Link, NavLink, useLoaderData } from "@remix-run/react";
 import { Edit2, ImageIcon, Plus, Trash2 } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
@@ -20,6 +24,23 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
 
   return { services };
+};
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  switch (intent) {
+    case "delete": {
+      const serviceId = formData.get("serviceId");
+      if (typeof serviceId !== "string" || serviceId.length === 0) {
+        return new Response("Invalid serivce", { status: 400 });
+      }
+      await serviceManager.deleteService(serviceId);
+
+      return { success: true };
+    }
+  }
 };
 
 export default function ManageServicesAllPage() {
