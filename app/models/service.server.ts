@@ -7,7 +7,6 @@ import {
   User,
 } from "@prisma/client";
 import { prisma } from "~/db.server";
-import { CacheManager } from "~/lib/cache/manager";
 import { sorting } from "~/lib/constants";
 import { formatSlug } from "~/lib/utils";
 
@@ -145,7 +144,6 @@ class ServiceManager {
   }: Pick<Service, "title" | "userId" | "categoryId" | "description"> & {
     media?: { url: Media["url"]; type: Media["type"]; name?: Media["name"] }[];
   }) {
-    CacheManager.revalidateTag("services");
     const slug = formatSlug(title);
 
     return this.prismaService.create({
@@ -171,8 +169,6 @@ class ServiceManager {
   }: Pick<Service, "id" | "title" | "categoryId" | "description"> & {
     media?: { url: Media["url"]; type: Media["type"]; name?: Media["name"] }[];
   }) {
-    CacheManager.revalidateTag("services");
-
     const slug = formatSlug(title);
 
     await this.prismaService.update({
@@ -209,8 +205,6 @@ class ServiceManager {
     id: Service["id"];
     status: Service["status"];
   }) {
-    CacheManager.revalidateTag("services");
-
     return this.prismaService.update({
       data: {
         status,
@@ -220,16 +214,12 @@ class ServiceManager {
   }
 
   async deleteService(id: Service["id"]) {
-    CacheManager.revalidateTag("services");
-
     return this.prismaService.delete({
       where: { id },
     });
   }
 
   async view(id: Service["id"]) {
-    CacheManager.revalidateTag("services");
-
     return this.prismaService.update({
       where: { id },
       data: {

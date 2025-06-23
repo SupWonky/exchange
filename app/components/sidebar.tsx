@@ -67,7 +67,7 @@ export function Sidebar({
         className="opacity-[0.975] p-0 w-96 max-sm:w-full overflow-hidden"
       >
         <SheetTitle className="px-4 py-3 border-b">
-          <MobileLink to="/" onOpenChange={setOpen}>
+          <MobileLink to="/" onOpenChange={setOpen} className="w-fit">
             <span className="font-bold">{siteConfig.name}</span>
           </MobileLink>
         </SheetTitle>
@@ -173,7 +173,12 @@ function MobileLink({
   ...props
 }: MobileLinkProps) {
   return (
-    <Link to={to} className={cn("block", className)} {...props}  onClick={() => onOpenChange(false)}>
+    <Link
+      to={to}
+      className={cn("block", className)}
+      {...props}
+      onClick={() => onOpenChange(false)}
+    >
       {children}
     </Link>
   );

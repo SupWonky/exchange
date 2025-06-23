@@ -3,7 +3,6 @@ import type { Category, Media, PrismaClient } from "@prisma/client";
 import { prisma } from "~/db.server";
 import { formatSlug } from "~/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
-import { CacheManager } from "~/lib/cache/manager";
 
 export type CategoryNode = Category & {
   children: CategoryNode[];
@@ -57,7 +56,6 @@ class CategoryManager {
     parentId?: Category["parentId"];
     imageId?: Media["id"];
   }) {
-    CacheManager.revalidateTag("categories");
     const slug = formatSlug(name);
 
     const categoryId = createId();

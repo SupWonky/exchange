@@ -1,7 +1,6 @@
 import type { Password, PrismaClient, User } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "~/db.server";
-import { CacheManager } from "~/lib/cache/manager";
 
 export type { User } from "@prisma/client";
 
@@ -47,8 +46,6 @@ class UserManager {
   }
 
   async updateBlog({ id, name, bio }: Pick<User, "id" | "name" | "bio">) {
-    CacheManager.revalidateTag("users");
-
     return this.prismaUser.update({
       data: { name, bio },
       where: { id: id },
