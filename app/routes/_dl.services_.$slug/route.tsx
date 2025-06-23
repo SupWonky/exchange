@@ -261,7 +261,7 @@ export default function ServicePage() {
                       className="has-[:checked]:bg-primary/10 flex flex-row gap-2 px-4 py-5 hover:text-foreground"
                     >
                       <Checkbox id="1" />
-                      <span>Эффект свечения</span>
+                      <span>Дополнительно 1</span>
                       <span className="ml-auto font-semibold text-primary">
                         500 ₽
                       </span>
@@ -272,19 +272,19 @@ export default function ServicePage() {
                       className="has-[:checked]:bg-primary/10 flex flex-row gap-2 px-4 py-5 hover:text-foreground"
                     >
                       <Checkbox id="2" />
-                      <span>Отрисовка персонажа</span>
+                      <span>Дополнительно 2</span>
                       <span className="ml-auto font-semibold text-primary">
                         500 ₽
                       </span>
                     </Label>
 
                     <Label
-                      htmlFor="3"
+                      htmlFor="2"
                       variant="button"
                       className="has-[:checked]:bg-primary/10 flex flex-row gap-2 px-4 py-5 hover:text-foreground"
                     >
-                      <Checkbox id="3" />
-                      <span>Объем</span>
+                      <Checkbox id="2" />
+                      <span>Дополнительно 3</span>
                       <span className="ml-auto font-semibold text-primary">
                         500 ₽
                       </span>

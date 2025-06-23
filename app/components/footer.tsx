@@ -23,22 +23,22 @@ export function Footer() {
             <h3 className="text-sm font-medium">Компания</h3>
             <ul className="space-y-2">
               <li>
-                <Link
-                  to="/terms"
+                <a
+                  href="#"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
                   aria-label="Terms of Service"
                 >
                   Правила использования
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
-                  to="/privacy"
+                <a
+                  href="#"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
                   aria-label="Privacy Policy"
                 >
                   Приватность
-                </Link>
+                </a>
               </li>
             </ul>
           </nav>
@@ -74,7 +74,7 @@ export function Footer() {
             <h3 className="text-sm font-medium">Соц. сети</h3>
             <div className="flex gap-4">
               <a
-                href="https://github.com/your-username"
+                href="#"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-foreground transition-colors duration-300"
@@ -83,7 +83,7 @@ export function Footer() {
                 <Github className="h-5 w-5" />
               </a>
               <a
-                href="https://twitter.com/your-username"
+                href="#"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-foreground transition-colors duration-300"
@@ -92,7 +92,7 @@ export function Footer() {
                 <Twitter className="h-5 w-5" />
               </a>
               <a
-                href="https://linkedin.com/company/your-brand"
+                href="#"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-foreground transition-colors duration-300"
