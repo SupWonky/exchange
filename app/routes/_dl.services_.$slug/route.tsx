@@ -229,15 +229,15 @@ export default function ServicePage() {
                   <div className="space-y-2">
                     <div className="flex items-center">
                       <Check className="h-4 w-4 text-green-500 mr-2" />
-                      <span className="text-sm">Высокое разрешение</span>
+                      <span className="text-sm">Опция 1</span>
                     </div>
                     <div className="flex items-center">
                       <Check className="h-4 w-4 text-green-500 mr-2" />
-                      <span className="text-sm">Исходники</span>
+                      <span className="text-sm">Опция 2</span>
                     </div>
                     <div className="flex items-center">
                       <Check className="h-4 w-4 text-green-500 mr-2" />
-                      <span className="text-sm">До 1 логотипа</span>
+                      <span className="text-sm">Опция 3</span>
                     </div>
                   </div>
                   {user && user.id === service.userId ? (
@@ -279,11 +279,11 @@ export default function ServicePage() {
                     </Label>
 
                     <Label
-                      htmlFor="2"
+                      htmlFor="3"
                       variant="button"
                       className="has-[:checked]:bg-primary/10 flex flex-row gap-2 px-4 py-5 hover:text-foreground"
                     >
-                      <Checkbox id="2" />
+                      <Checkbox id="3" />
                       <span>Дополнительно 3</span>
                       <span className="ml-auto font-semibold text-primary">
                         500 ₽
