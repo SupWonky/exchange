@@ -42,7 +42,7 @@ export interface Review {
 
 export function ProfileCard({ user }: { user: User }) {
   return (
-    <div className="bg-white rounded-2xl shadow border overflow-hidden flex flex-col lg:flex-row">
+    <div className="bg-white rounded-2xl shadow border overflow-hidden flex flex-col md:flex-row">
       <div className="flex-1 flex pb-6 pt-4 pl-6">
         <div className="flex-initial">
           <img

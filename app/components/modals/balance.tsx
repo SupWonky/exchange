@@ -33,13 +33,17 @@ export function BalanceModal({ user }: { user: User }) {
   };
 
   useEffect(() => {
-    if (fetcher.data) {
-      if ("transaction" in fetcher.data) {
-        const transaction = fetcher.data.transaction;
+    if (fetcher.data && "transaction" in fetcher.data) {
+      const transaction = fetcher.data.transaction;
+      let form: HTMLFormElement | null = null;
 
-        const form = document.createElement("form");
+      // Create and submit form immediately
+      const submitForm = () => {
+        form = document.createElement("form");
         form.method = "post";
         form.action = "https://demo.paykeeper.ru/create";
+        form.style.display = "none";
+        form.target = "_blank";
 
         const fields = {
           sum: transaction.amount.toString(),
@@ -49,16 +53,24 @@ export function BalanceModal({ user }: { user: User }) {
 
         Object.entries(fields).forEach(([key, value]) => {
           const input = document.createElement("input");
+          input.type = "hidden";
           input.name = key;
           input.value = value;
-          input.type = "hidden";
-          form.appendChild(input);
+          form!.appendChild(input);
         });
 
         document.body.appendChild(form);
         form.submit();
-        document.body.removeChild(form);
-      }
+      };
+
+      submitForm();
+
+      // Cleanup handler
+      return () => {
+        if (form && document.body.contains(form)) {
+          document.body.removeChild(form);
+        }
+      };
     }
   }, [fetcher.data]);
 

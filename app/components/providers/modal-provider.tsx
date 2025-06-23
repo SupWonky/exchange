@@ -31,10 +31,6 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
   const canGoBack = history.length > 1;
 
   React.useEffect(() => {
-    console.log(direction);
-  }, [direction]);
-
-  React.useEffect(() => {
     if (currentModal) {
       setOpen(true);
     } else {
