@@ -1,7 +1,6 @@
 import type { Password, PrismaClient, User } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "~/db.server";
-import { Cache } from "~/lib/cache/decorator";
 import { CacheManager } from "~/lib/cache/manager";
 
 export type { User } from "@prisma/client";
@@ -9,7 +8,6 @@ export type { User } from "@prisma/client";
 class UserManager {
   constructor(private readonly prismaUser: PrismaClient["user"]) {}
 
-  @Cache(["users"], (id) => id)
   async getUserById(id: User["id"]) {
     return await this.prismaUser.findUnique({
       where: { id },
@@ -17,7 +15,6 @@ class UserManager {
     });
   }
 
-  @Cache(["users"], (email) => email)
   async getUserByEmail(email: User["email"]) {
     return this.prismaUser.findUnique({ where: { email } });
   }

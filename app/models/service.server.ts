@@ -7,7 +7,6 @@ import {
   User,
 } from "@prisma/client";
 import { prisma } from "~/db.server";
-import { Cache } from "~/lib/cache/decorator";
 import { CacheManager } from "~/lib/cache/manager";
 import { sorting } from "~/lib/constants";
 import { formatSlug } from "~/lib/utils";
@@ -15,7 +14,6 @@ import { formatSlug } from "~/lib/utils";
 class ServiceManager {
   constructor(private readonly prismaService: PrismaClient["service"]) {}
 
-  @Cache(["services"], (id) => id)
   async getServiceById(id: Service["id"]) {
     return prisma.service.findUnique({
       where: { id },
@@ -29,7 +27,6 @@ class ServiceManager {
     });
   }
 
-  @Cache(["services"], (slug) => slug)
   async getServiceBySlug(slug: Service["slug"]) {
     return prisma.service.findFirst({
       where: {
@@ -49,7 +46,6 @@ class ServiceManager {
     });
   }
 
-  @Cache(["services"])
   async getServiceListByUser({
     userId,
     status,

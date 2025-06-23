@@ -3,7 +3,6 @@ import type { Category, Media, PrismaClient } from "@prisma/client";
 import { prisma } from "~/db.server";
 import { formatSlug } from "~/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
-import { Cache } from "~/lib/cache/decorator";
 import { CacheManager } from "~/lib/cache/manager";
 
 export type CategoryNode = Category & {
@@ -14,7 +13,6 @@ export type CategoryNode = Category & {
 class CategoryManager {
   constructor(private readonly prismaCategory: PrismaClient["category"]) {}
 
-  @Cache(["categories"])
   async getCategoriesTree() {
     const allCategories = await this.prismaCategory.findMany({
       orderBy: { path: "asc" },
@@ -90,7 +88,6 @@ class CategoryManager {
     });
   }
 
-  @Cache(["category"])
   async getCategoryWithChildren({ slug }: { slug: Category["slug"] }) {
     return this.prismaCategory.findFirst({
       where: {
@@ -104,7 +101,6 @@ class CategoryManager {
     });
   }
 
-  @Cache(["category"])
   async getCategoryTree({ path }: { path: Category["path"] }) {
     const pathParts = path.split("/");
     return this.prismaCategory.findMany({

@@ -1,12 +1,18 @@
 import { type MetaFunction } from "@remix-run/node";
-import { Link } from "@remix-run/react";
-import { useParentData } from "~/hooks/use-parent-data";
+import { Link, useLoaderData } from "@remix-run/react";
 import { loader as RootLoader } from "./_dl";
+import { categoryManager } from "~/models/category.server";
 
 export const meta: MetaFunction = () => [{ title: "EasyWork" }];
 
+export const loader = async () => {
+  const categories = await categoryManager.getCategoriesTree();
+
+  return { categories: categories };
+};
+
 export default function Index() {
-  const parnetData = useParentData<typeof RootLoader>("routes/_dl");
+  const { categories } = useLoaderData<typeof loader>();
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -15,7 +21,7 @@ export default function Index() {
           Выберите рубрику, чтобы начать
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {parnetData?.categories.map((category) => (
+          {categories.map((category) => (
             <Link
               className="group focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-xl overflow-hidden shadow-lg border"
               key={category.id}
