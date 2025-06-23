@@ -53,6 +53,7 @@ export default function InboxLayout() {
                           isActive ? "bg-accent/20" : ""
                         }`
                       }
+                      prefetch="intent"
                     >
                       <div className="relative">
                         <Avatar className="h-12 w-12 border">

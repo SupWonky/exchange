@@ -130,7 +130,7 @@ export default function CategoryPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-70 duration-300 transition-opacity group-hover:opacity-100"></div>
 
                   <div className="absolute bottom-0 left-0 right-0 p-4 transform transition-transform duration-300 group-hover:translate-y-0">
-                    <h3 className="text-white text-xl font-medium">
+                    <h3 className="text-white text-2xl font-medium">
                       {category.name}
                     </h3>
                   </div>

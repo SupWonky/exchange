@@ -133,13 +133,13 @@ export default function CreateServicePageSetp2() {
                 >
                   1 пакет
                 </span>
-                <Switch
+                {/* <Switch
                   checked={mode === "multiple"}
                   onCheckedChange={(checked) =>
                     setMode(checked ? "multiple" : "single")
                   }
-                />
-                <span
+                /> */}
+                {/* <span
                   className={`${
                     mode === "multiple"
                       ? "text-foreground"
@@ -147,7 +147,7 @@ export default function CreateServicePageSetp2() {
                   }`}
                 >
                   3 пакета
-                </span>
+                </span> */}
               </div>
             </CardTitle>
             {formErrors && (

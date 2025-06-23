@@ -41,7 +41,7 @@ export default function Index() {
 
                 {/* Category name - positioned at bottom for better readability */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 transform transition-transform duration-300 group-hover:translate-y-0">
-                  <h3 className="text-white text-xl font-medium">
+                  <h3 className="text-white text-2xl font-medium">
                     {category.name}
                   </h3>
                 </div>
