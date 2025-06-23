@@ -148,15 +148,15 @@ export default function ServicePage() {
                 <ul className="space-y-1">
                   <li className="flex items-center">
                     <Check className="h-4 w-4 text-green-500 mr-2" />
-                    <span>Высокое разрешение</span>
+                    <span>Опция 1</span>
                   </li>
                   <li className="flex items-center">
                     <Check className="h-4 w-4 text-green-500 mr-2" />
-                    <span>Исходники</span>
+                    <span>Опция 2</span>
                   </li>
                   <li className="flex items-center">
                     <Check className="h-4 w-4 text-green-500 mr-2" />
-                    <span>Количество логотипов: 1</span>
+                    <span>Опция 3</span>
                   </li>
                   <li className="flex items-center !mt-3">
                     <span className="font-semibold mr-2">Срок выполнения:</span>{" "}
