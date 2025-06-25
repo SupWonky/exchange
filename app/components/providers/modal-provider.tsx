@@ -19,13 +19,12 @@ const ModalContext = React.createContext<ModalContextValues | undefined>(
 );
 
 export function ModalProvider({ children }: { children: React.ReactNode }) {
-  const navigate = useNavigate();
   const location = useLocation();
   const [history, setHistory] = React.useState<string[]>([]);
   const [direction, setDirection] = React.useState<Direction>();
 
   const [currentModal, setCurrentModal] = React.useState<string | null>(
-    location.hash
+    location.hash.replace("#", "")
   );
   const [open, setOpen] = React.useState(Boolean(currentModal));
   const canGoBack = history.length > 1;

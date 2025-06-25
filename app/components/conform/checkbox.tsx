@@ -2,16 +2,19 @@ import {
   FieldMetadata,
   unstable_useControl as useControl,
 } from "@conform-to/react";
-import { ElementRef, useRef } from "react";
+import { ComponentProps, ElementRef, useRef } from "react";
 import { Checkbox } from "../ui/checkbox";
 
 export function CheckboxConform({
   meta,
+  ...props
 }: {
   meta: FieldMetadata<string | boolean | undefined>;
-}) {
+} & ComponentProps<typeof Checkbox>) {
   const checkboxRef = useRef<ElementRef<typeof Checkbox>>(null);
   const control = useControl(meta);
+
+  console.log(control.value);
 
   return (
     <>
@@ -33,6 +36,7 @@ export function CheckboxConform({
           control.change(checked ? "on" : "");
         }}
         onBlur={control.blur}
+        {...props}
       />
     </>
   );

@@ -1,6 +1,7 @@
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
+  MetaFunction,
   redirect,
 } from "@remix-run/node";
 import { Form, Link, NavLink, useLoaderData } from "@remix-run/react";
@@ -8,11 +9,12 @@ import { Edit2, ImageIcon, Plus, Trash2 } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
+import { siteConfig } from "~/config/site";
 import { serviceManager } from "~/models/service.server";
-import { getUser } from "~/session.server";
+import { requireUser, requireUserId } from "~/session.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await getUser(request);
+  const user = await requireUser(request);
 
   if (!user) {
     return redirect("/login?redirectTo=/services/published");
@@ -23,10 +25,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     status: "PUBLISHED",
   });
 
-  return { services };
+  return { services, user };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  await requireUserId(request);
   const formData = await request.formData();
   const intent = formData.get("intent");
 
@@ -41,6 +44,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return { success: true };
     }
   }
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [
+    { title: `Опубликованные улсуги ${data?.user.name} - ${siteConfig.name}` },
+  ];
 };
 
 export default function ManageServicesAllPage() {

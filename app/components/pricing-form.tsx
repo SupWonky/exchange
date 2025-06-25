@@ -1,8 +1,12 @@
-import { SubmissionResult, useForm } from "@conform-to/react";
+import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
-import { PricingTier, PricingVariant } from "@prisma/client";
-import { Form, useNavigation } from "@remix-run/react";
-import { useEffect, useState } from "react";
+import type {
+  PricingTier,
+  PricingTierOption,
+  PricingVariant,
+} from "@prisma/client";
+import { Form, useActionData, useNavigation } from "@remix-run/react";
+import { useMemo, useState } from "react";
 import { PricingSchema } from "~/constants/schemas";
 import { getPricingVariantLabel } from "~/utils";
 import { Button } from "./ui/button";
@@ -29,51 +33,61 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { Checkbox } from "./ui/checkbox";
 import { Cross1Icon } from "@radix-ui/react-icons";
 import { Field } from "./field";
+import type { action } from "~/routes/_dl.services_.new_.step-2";
+import { CheckboxConform } from "./conform/checkbox";
 
 type PricingFormProps = {
   mode: "single" | "multiple";
-  lastResult: SubmissionResult<string[]> | undefined;
-  onChangeFormErrors?: (value: string[] | undefined) => void;
-  defualtValue?: PricingTier[];
+  defualtValue?: Array<PricingTier & { options: PricingTierOption[] }>;
 };
 
-export function PricingForm({
-  mode,
-  lastResult,
-  defualtValue,
-  onChangeFormErrors,
-}: PricingFormProps) {
+export function PricingForm({ mode, defualtValue }: PricingFormProps) {
+  const lastResult = useActionData<typeof action>();
   const navigation = useNavigation();
-  const isSubmitting = navigation.state !== "idle";
-  const variants =
-    mode === "single"
-      ? [PricingVariant.BASIC]
-      : [
-          PricingVariant.BASIC,
-          PricingVariant.STANDARD,
-          PricingVariant.BUSINESS,
-        ];
+  const isSubmitting =
+    navigation.formAction?.includes("/services/new/step-2") ?? false;
+  const variants: PricingVariant[] =
+    mode === "single" ? ["BASIC"] : ["BASIC", "STANDARD", "BUSINESS"];
 
-  const pricingVariants =
-    defualtValue !== undefined
-      ? defualtValue
-      : variants.map((variant) => ({
+  const pricingVariants = useMemo(() => {
+    if (!defualtValue) {
+      return variants.map((variant) => ({
+        variant,
+        price: 500,
+        duration: 1440,
+        volume: "",
+        description: "",
+        options: [],
+      }));
+    }
+
+    if (defualtValue.length === 1) {
+      const defVairant = defualtValue[0];
+
+      return variants.map((variant) => {
+        if (variant === defVairant.variant) {
+          return defVairant;
+        }
+        return {
           variant,
           price: 500,
           duration: 1440,
           volume: "",
           description: "",
           options: [],
-        }));
+        };
+      });
+    }
+
+    return defualtValue;
+  }, [defualtValue]);
 
   const [form, fields] = useForm({
     lastResult,
@@ -82,16 +96,21 @@ export function PricingForm({
     },
     defaultValue: {
       mode,
-      pricingVariants: pricingVariants,
+      pricingVariants: pricingVariants.map(({ options, ...rest }) => ({
+        ...rest,
+        options: options.map((option) => ({
+          value:
+            option.type === "BOOLEAN"
+              ? option.booleanValue
+              : option.stringValue,
+          name: option.name,
+          type: option.type,
+        })),
+      })),
     },
-    shouldRevalidate: "onInput",
   });
 
   const pricingList = fields.pricingVariants.getFieldList();
-
-  useEffect(() => {
-    onChangeFormErrors?.(form.errors);
-  }, [form.errors, onChangeFormErrors]);
 
   return (
     <Form method="post" className="flex flex-col gap-y-4" id={form.id}>
@@ -234,73 +253,83 @@ export function PricingForm({
 
                 <div className="border rounded-lg mt-1">
                   <Table>
-                    <TableHeader>
-                      <TableRow>
-                        {options.length > 0 && (
-                          <>
-                            <TableHead>Название</TableHead>
-                            <TableHead>Значение</TableHead>
-                            <TableHead></TableHead>
-                          </>
-                        )}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {options.map((option, idx) => {
-                        const optionFields = option.getFieldset();
-
-                        return (
-                          <TableRow key={option.key}>
-                            <TableCell>
-                              <input
-                                readOnly
-                                className="bg-transparent  outline-none"
-                                placeholder="Название"
-                                name={optionFields.name.name}
-                                defaultValue={optionFields.name.value || ""}
-                              />
-                              <input
-                                type="hidden"
-                                name={optionFields.type.name}
-                                value={optionFields.type.value || "BOOLEAN"}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              {optionFields.type.value === "BOOLEAN" ? (
-                                <div className="flex items-center justify-start">
-                                  <Checkbox
-                                    name={optionFields.value.name}
-                                    className="h-5 w-5"
-                                  />
-                                </div>
-                              ) : (
-                                <Input
-                                  name={optionFields.value.name}
-                                  defaultValue={optionFields.value.value || ""}
-                                  placeholder="Пример: трудная (сложность)"
-                                />
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="destructive"
-                                size="icon"
-                                type="button"
-                                onClick={() => {
-                                  form.remove({
-                                    name: pricingFields.options.name,
-                                    index: idx,
-                                  });
-                                }}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </TableCell>
+                    {options.length > 0 && (
+                      <>
+                        <TableHeader>
+                          <TableRow>
+                            {options.length > 0 && (
+                              <>
+                                <TableHead>Название</TableHead>
+                                <TableHead>Значение</TableHead>
+                                <TableHead></TableHead>
+                              </>
+                            )}
                           </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                    <TableFooter>
+                        </TableHeader>
+                        <TableBody>
+                          {options.map((option, idx) => {
+                            const optionFields = option.getFieldset();
+
+                            return (
+                              <TableRow key={option.key}>
+                                <TableCell>
+                                  <input
+                                    readOnly
+                                    className="bg-transparent  outline-none"
+                                    placeholder="Название"
+                                    name={optionFields.name.name}
+                                    defaultValue={optionFields.name.value || ""}
+                                  />
+                                  <input
+                                    type="hidden"
+                                    name={optionFields.type.name}
+                                    value={optionFields.type.value || "BOOLEAN"}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  {optionFields.type.value === "BOOLEAN" ? (
+                                    <div className="flex items-center justify-start">
+                                      <CheckboxConform
+                                        meta={optionFields.value}
+                                        // defaultChecked={optionFields.value.initialValue}
+                                        className="h-5 w-5"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <Input
+                                      name={optionFields.value.name}
+                                      defaultValue={
+                                        optionFields.value.value || ""
+                                      }
+                                      placeholder="Пример: трудная (сложность)"
+                                    />
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="destructive"
+                                    size="icon"
+                                    type="button"
+                                    onClick={() => {
+                                      form.remove({
+                                        name: pricingFields.options.name,
+                                        index: idx,
+                                      });
+                                    }}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </>
+                    )}
+
+                    <TableFooter
+                      className={`${options.length === 0 && "border-t-0"}`}
+                    >
                       <TableRow>
                         <TableCell colSpan={3}>
                           <OptionDialog

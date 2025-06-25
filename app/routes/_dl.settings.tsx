@@ -1,11 +1,16 @@
-import { requireUserId } from "~/session.server";
-import { User, Settings } from "lucide-react";
+import { requireUser } from "~/session.server";
+import { User } from "lucide-react";
 import { Link } from "@remix-run/react";
-import { LoaderFunctionArgs } from "@remix-run/node";
+import { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import { siteConfig } from "~/config/site";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUserId(request);
-  return {};
+  const user = await requireUser(request);
+  return { user };
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [{ title: `Настройки ${data?.user.name} - ${siteConfig.name}` }];
 };
 
 export default function SettingsPage() {

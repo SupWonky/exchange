@@ -1,10 +1,17 @@
 import { z } from "zod";
 
-const OptionSchema = z.object({
-  name: z.string({ message: "Введите имя" }),
-  type: z.enum(["STRING", "BOOLEAN"]),
-  value: z.union([z.string(), z.boolean()]),
-});
+const OptionSchema = z.discriminatedUnion("type", [
+  z.object({
+    name: z.string({ message: "Введите имя" }),
+    type: z.literal("STRING"),
+    value: z.string({ message: "Введите значение" }),
+  }),
+  z.object({
+    name: z.string({ message: "Введите имя" }),
+    type: z.literal("BOOLEAN"),
+    value: z.boolean(),
+  }),
+]);
 
 const PricingSchema = z.object({
   mode: z.enum(["single", "multiple"]),

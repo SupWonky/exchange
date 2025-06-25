@@ -1,32 +1,33 @@
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
+  MetaDescriptor,
+  MetaFunction,
   redirect,
 } from "@remix-run/node";
-import { useActionData, useLoaderData, useNavigation } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 import { serviceManager } from "~/models/service.server";
 import {
   createPricings,
   getPricingListByService,
   updatePricings,
 } from "~/models/pricing.server";
-import { getUserId } from "~/session.server";
+import { requireUserId } from "~/session.server";
 import { parseWithZod } from "@conform-to/zod";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useState } from "react";
 import { Switch } from "~/components/ui/switch";
 import { PricingSchema } from "~/constants/schemas";
 import { PricingForm } from "~/components/pricing-form";
+import { siteConfig } from "~/config/site";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
+
+  console.log(formData);
   const submission = parseWithZod(formData, { schema: PricingSchema });
+
+  //console.log(submission.reply());
 
   if (submission.status !== "success") {
     return submission.reply();
@@ -45,6 +46,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const { pricingVariants, mode } = submission.value;
+
+  console.log(pricingVariants[0].options);
 
   if (mode === "single" && pricingVariants.length !== 1) {
     return submission.reply({
@@ -86,27 +89,48 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const userId = await getUserId(request);
-  if (!userId) return redirect("/login?redirectTo=/services/new/setp-2");
+  await requireUserId(request);
 
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
+
   if (!id) {
-    return redirect("/services/new");
+    throw new Response("Not Found", { status: 404 });
   }
 
-  const pricings = await getPricingListByService(id);
-
-  if (pricings.length === 0) {
-    return { pricings: undefined };
+  const service = await serviceManager.getServiceById(id);
+  if (!service) {
+    throw new Response("Not Found", { status: 404 });
   }
 
-  return { pricings };
+  const pricings = await getPricingListByService(service.id);
+
+  return { pricings, service };
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const res: MetaDescriptor[] = [
+    { title: `Стоимость ${data?.service.title} - ${siteConfig.name}` },
+    { name: "description", content: data?.service.description },
+    { name: "og:description", content: data?.service.description },
+    {
+      name: "og:title",
+      content: `${data?.service?.title} - ${siteConfig.name}`,
+    },
+  ];
+
+  if (data?.service.media.at(0)) {
+    res.push({
+      property: "og:image",
+      content: data.service.media[0].url,
+    });
+  }
+
+  return res;
 };
 
 export default function CreateServicePageSetp2() {
   const { pricings } = useLoaderData<typeof loader>();
-  const lastResult = useActionData<typeof action>();
   const [mode, setMode] = useState<"single" | "multiple">(() => {
     if (pricings) {
       return pricings.length === 3 ? "multiple" : "single";
@@ -114,7 +138,6 @@ export default function CreateServicePageSetp2() {
 
     return "single";
   });
-  const [formErrors, setFormErrors] = useState<string[] | undefined>(undefined);
 
   return (
     <div className="flex flex-1 justify-center items-start">
@@ -133,13 +156,13 @@ export default function CreateServicePageSetp2() {
                 >
                   1 пакет
                 </span>
-                {/* <Switch
+                <Switch
                   checked={mode === "multiple"}
                   onCheckedChange={(checked) =>
                     setMode(checked ? "multiple" : "single")
                   }
-                /> */}
-                {/* <span
+                />
+                <span
                   className={`${
                     mode === "multiple"
                       ? "text-foreground"
@@ -147,23 +170,12 @@ export default function CreateServicePageSetp2() {
                   }`}
                 >
                   3 пакета
-                </span> */}
+                </span>
               </div>
             </CardTitle>
-            {formErrors && (
-              <CardDescription className="text-destructive">
-                {formErrors}
-              </CardDescription>
-            )}
           </CardHeader>
           <CardContent>
-            <PricingForm
-              key={mode}
-              mode={mode}
-              lastResult={lastResult}
-              onChangeFormErrors={setFormErrors}
-              defualtValue={pricings}
-            />
+            <PricingForm key={mode} mode={mode} defualtValue={pricings} />
           </CardContent>
         </Card>
       </div>

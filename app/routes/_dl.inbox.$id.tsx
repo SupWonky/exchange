@@ -1,7 +1,7 @@
 import { useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
 import { Message } from "@prisma/client";
-import { LoaderFunctionArgs, redirect } from "@remix-run/node";
+import { LoaderFunctionArgs, MetaFunction, redirect } from "@remix-run/node";
 import {
   Form,
   Link,
@@ -15,6 +15,7 @@ import invariant from "tiny-invariant";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { siteConfig } from "~/config/site";
 import { MessageSchema } from "~/constants/schemas";
 import { cn, formatDate, formatTime, isSameDay } from "~/lib/utils";
 import {
@@ -23,17 +24,12 @@ import {
   getChatMessages,
   getOrdersChatByUser,
 } from "~/models/chat.server";
-import { getUser, requireUserId } from "~/session.server";
+import { requireUser, requireUserId } from "~/session.server";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   invariant(params.id, "Id not found");
 
-  const user = await getUser(request);
-
-  if (!user) {
-    return redirect("/login?redirectTo=/inbox");
-  }
-
+  const user = await requireUser(request);
   const url = new URL(request.url);
   const page = Number(url.searchParams.get("page") || "1");
   const chat = await getChatById(params.id);
@@ -80,6 +76,14 @@ const groupMessagesWithDates = (messages: Message[]) => {
   });
 
   return grouped;
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const participant = data?.chat.participants.find(
+    (item) => item.id !== data.user.id
+  );
+
+  return [{ title: `Чат c ${participant?.name} - ${siteConfig.name}` }];
 };
 
 export default function ChatPage() {

@@ -87,7 +87,6 @@ function SidebarRenderer({
   onOpenChange: (open: boolean) => void;
 }) {
   const { paths } = useSidebar();
-  console.log(items);
 
   return (
     <div

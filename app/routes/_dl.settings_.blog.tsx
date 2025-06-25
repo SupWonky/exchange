@@ -13,9 +13,14 @@ import {
   useLoaderData,
   useNavigation,
 } from "@remix-run/react";
-import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "@remix-run/node";
 import { BlogSchema } from "~/constants/schemas";
 import { TextareaConform } from "~/components/conform/textarea";
+import { siteConfig } from "~/config/site";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
@@ -40,6 +45,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 
   return submission.reply({ resetForm: true });
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [
+    { title: `Настройки профиля ${data?.user.name} - ${siteConfig.name}` },
+  ];
 };
 
 export default function EditBlog() {

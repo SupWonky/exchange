@@ -1,7 +1,8 @@
-import { LoaderFunctionArgs, redirect } from "@remix-run/node";
+import { LoaderFunctionArgs, MetaFunction, redirect } from "@remix-run/node";
 import { NavLink, Outlet, useLoaderData, useLocation } from "@remix-run/react";
 import { MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { siteConfig } from "~/config/site";
 import { cn, formatRelativeTime } from "~/lib/utils";
 import { getChatsByUser } from "~/models/chat.server";
 import { requireUserId } from "~/session.server";
@@ -16,6 +17,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const chatsOfUser = await getChatsByUser(userId);
 
   return { chats: chatsOfUser };
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [{ title: `Чаты - ${siteConfig.name}` }];
 };
 
 export default function InboxLayout() {

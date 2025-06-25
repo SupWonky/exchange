@@ -1,4 +1,4 @@
-import { LoaderFunctionArgs, redirect } from "@remix-run/node";
+import { LoaderFunctionArgs, MetaFunction, redirect } from "@remix-run/node";
 import { useLoaderData, useSearchParams, Link } from "@remix-run/react";
 import { getOrdersByStatus, getOrdersByUser } from "~/models/order.server";
 import { getUserId } from "~/session.server";
@@ -17,6 +17,7 @@ import {
   FileWarning,
 } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
+import { siteConfig } from "~/config/site";
 
 type OrderWithRelations = Order & {
   pricingTier: (PricingTier & { service: Service }) | null;
@@ -147,6 +148,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     userId,
     currentStatus: status,
   };
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [{ title: `Заказы ${data?.currentStatus} - ${siteConfig.name}` }];
 };
 
 export default function OrdersPage() {

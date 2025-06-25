@@ -102,6 +102,10 @@ export function convertVolumeToMinutes(value: number, type: "hour" | "day") {
   return value * 24 * 60;
 }
 
+export function convertDurationToDays(value: number) {
+  return Math.floor(value / 60 / 24);
+}
+
 export function getPricingVariantLabel(variant: PricingVariant) {
   switch (variant) {
     case "BASIC":

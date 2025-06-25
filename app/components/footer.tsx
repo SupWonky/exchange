@@ -59,7 +59,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="/careers"
+                  href="#"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
                   aria-label="Career opportunities"
                 >

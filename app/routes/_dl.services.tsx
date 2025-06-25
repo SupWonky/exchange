@@ -1,6 +1,7 @@
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
+  MetaFunction,
   redirect,
 } from "@remix-run/node";
 import { Form, Link, NavLink, useLoaderData } from "@remix-run/react";
@@ -9,18 +10,18 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { serviceManager } from "~/models/service.server";
-import { getUser } from "~/session.server";
+import { requireUser } from "~/session.server";
+import { siteConfig } from "~/config/site";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await getUser(request);
-  if (!user) return redirect("/login?redirectTo=/services");
+  const user = await requireUser(request);
 
   const draftServices = await serviceManager.getServiceListByUser({
     userId: user.id,
     status: "DRAFT",
   });
 
-  return { draftServices };
+  return { draftServices, user };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -38,6 +39,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return { success: true };
     }
   }
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [{ title: `Черновик улсуг ${data?.user.name} - ${siteConfig.name}` }];
 };
 
 export default function ManageServicesPage() {
@@ -74,6 +79,7 @@ export default function ManageServicesPage() {
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`
             }
+            prefetch="intent"
           >
             Черновики
           </NavLink>
@@ -87,6 +93,7 @@ export default function ManageServicesPage() {
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`
             }
+            prefetch="intent"
           >
             Опубликованные
           </NavLink>

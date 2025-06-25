@@ -5,7 +5,12 @@ import {
   MetaFunction,
   redirect,
 } from "@remix-run/node";
-import { Form, useLoaderData, useNavigate } from "@remix-run/react";
+import {
+  Form,
+  useLoaderData,
+  useNavigate,
+  useNavigation,
+} from "@remix-run/react";
 import { Check, Clock, Infinity } from "lucide-react";
 import invariant from "tiny-invariant";
 import { CategoryBreadcrumbs } from "~/components/category-breadcrumbs";
@@ -19,7 +24,11 @@ import { placeOrder } from "~/models/order.server";
 import { getPricing } from "~/models/pricing.server";
 import { serviceManager } from "~/models/service.server";
 import { getUser, requireUser } from "~/session.server";
-import { formatRating, getPricingVariantLabel } from "~/utils";
+import {
+  convertDurationToDays,
+  formatRating,
+  getPricingVariantLabel,
+} from "~/utils";
 import { SellerInfo } from "./seller-info";
 import { GuaranteeSection } from "./guarantee-section";
 import { FormEvent } from "react";
@@ -88,8 +97,11 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 export default function ServicePage() {
   const { service, categoryTree, user } = useLoaderData<typeof loader>();
+  const navigation = useNavigation();
   const navigate = useNavigate();
   useMarkAsView({ serviceId: service.id, userId: user?.id });
+  const isSubmitting =
+    navigation.formAction?.includes(`/services/${service.slug}`) ?? false;
 
   const handleOnSumbit = (e: FormEvent, price: number) => {
     if (!user) {
@@ -146,26 +158,36 @@ export default function ServicePage() {
                   Фриланс услуга включает:
                 </div>
                 <ul className="space-y-1">
-                  <li className="flex items-center">
-                    <Check className="h-4 w-4 text-green-500 mr-2" />
-                    <span>Опция 1</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-4 w-4 text-green-500 mr-2" />
-                    <span>Опция 2</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-4 w-4 text-green-500 mr-2" />
-                    <span>Опция 3</span>
-                  </li>
+                  {service.pricingTier[0].options.map((option) => (
+                    <li className="flex items-center" key={option.name}>
+                      {option.type === "BOOLEAN" ? (
+                        <>
+                          <Check className="h-4 w-4 text-green-500 mr-2" />
+                          <span className="text-sm">{option.name}</span>
+                        </>
+                      ) : (
+                        <>
+                          <div className="font-semibold">{option.name}:</div>
+                          <span>{option.stringValue}</span>
+                        </>
+                      )}
+                    </li>
+                  ))}
+
                   <li className="flex items-center !mt-3">
                     <span className="font-semibold mr-2">Срок выполнения:</span>{" "}
-                    7 дней
+                    {convertDurationToDays(service.pricingTier[0].duration)}{" "}
+                    дней
+                  </li>
+
+                  <li className="flex items-center !mt-3">
+                    <span className="font-semibold mr-2">Объем услуги:</span>{" "}
+                    {service.pricingTier[0].volume}
                   </li>
                 </ul>
               </div>
 
-              <div className="space-y-4 mt-4">
+              {/* <div className="space-y-4 mt-4">
                 <div>
                   <span className="font-semibold">Вид: </span>
                   Новый логотип
@@ -178,7 +200,7 @@ export default function ServicePage() {
                   <span className="font-semibold">Создание логотипа: </span>
                   По эскизу
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -216,7 +238,10 @@ export default function ServicePage() {
                     </div>
                     <div className="flex items-center">
                       <Clock className="h-4 w-4 mr-2" />
-                      <span className="text-sm">7 дней на выполнение</span>
+                      <span className="text-sm">
+                        {convertDurationToDays(service.pricingTier[0].duration)}{" "}
+                        дней на выполнение
+                      </span>
                     </div>
                     <div className="flex items-center text-muted-foreground">
                       <Clock className="h-4 w-4 mr-2" />
@@ -227,24 +252,33 @@ export default function ServicePage() {
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex items-center">
-                      <Check className="h-4 w-4 text-green-500 mr-2" />
-                      <span className="text-sm">Опция 1</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Check className="h-4 w-4 text-green-500 mr-2" />
-                      <span className="text-sm">Опция 2</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Check className="h-4 w-4 text-green-500 mr-2" />
-                      <span className="text-sm">Опция 3</span>
-                    </div>
+                    {service.pricingTier[0].options.map((option) => (
+                      <div className="flex items-center" key={option.name}>
+                        {option.type === "BOOLEAN" ? (
+                          <>
+                            <Check className="h-4 w-4 text-green-500 mr-2" />
+                            <span className="text-sm">{option.name}</span>
+                          </>
+                        ) : (
+                          <>
+                            <div className="font-semibold">{option.name}:</div>
+                            <span>{option.stringValue}</span>
+                          </>
+                        )}
+                      </div>
+                    ))}
                   </div>
                   {user && user.id === service.userId ? (
                     <></>
                   ) : (
-                    <Button type="submit" className="w-full">
-                      Заказать за {service.pricingTier[0].price} ₽
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting
+                        ? "Обрабатываю..."
+                        : `Заказать за ${service.pricingTier[0].price} ₽`}
                     </Button>
                   )}
                 </div>
@@ -310,24 +344,29 @@ export default function ServicePage() {
                 </TabsList>
                 {service.pricingTier.map((item) => (
                   <TabsContent
-                    className="px-6 pb-4 space-y-4"
+                    className="px-6 pb-4 space-y-2"
                     key={item.id}
                     value={item.variant}
                   >
                     {item.options.map((option) => (
-                      <div className="flex justify-between" key={option.name}>
-                        <div>{option.name}</div>
+                      <div className="flex items-center" key={option.name}>
                         {option.type === "BOOLEAN" ? (
-                          <Check className="h-4 w-4 text-primary" />
+                          <>
+                            <Check className="h-4 w-4 text-green-500 mr-2" />
+                            <span className="text-sm">{option.name}</span>
+                          </>
                         ) : (
-                          <span>{option.stringValue}</span>
+                          <>
+                            <div className="font-semibold">{option.name}:</div>
+                            <span>{option.stringValue}</span>
+                          </>
                         )}
                       </div>
                     ))}
                     <div className="flex justify-between">
                       <div>Срок выполнения</div>
                       <div className="font-medium">
-                        {item.duration / 60 / 24} дней
+                        {convertDurationToDays(item.duration)} дней
                       </div>
                     </div>
                     <Form
@@ -342,8 +381,14 @@ export default function ServicePage() {
                       {user && user.id === service.userId ? (
                         <></>
                       ) : (
-                        <Button type="submit" className="w-full">
-                          Заказать за {item.price} ₽
+                        <Button
+                          type="submit"
+                          className="w-full"
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting
+                            ? "Обрабатываю..."
+                            : `Заказать за ${item.price} ₽`}
                         </Button>
                       )}
                     </Form>

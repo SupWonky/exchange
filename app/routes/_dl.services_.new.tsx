@@ -1,6 +1,8 @@
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
+  MetaDescriptor,
+  MetaFunction,
   redirect,
 } from "@remix-run/node";
 import { useForm } from "@conform-to/react";
@@ -27,10 +29,10 @@ import {
 } from "~/components/ui/card";
 import { Label } from "~/components/ui/label";
 import { ServiceSchema } from "~/constants/schemas";
+import { siteConfig } from "~/config/site";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
-
   const formData = await request.formData();
   const submission = parseWithZod(formData, { schema: ServiceSchema });
 
@@ -86,6 +88,30 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return { categories, service };
 };
 
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const res: MetaDescriptor[] = [];
+
+  if (data?.service) {
+    res.push(
+      ...[
+        { title: `Изменить ${data?.service.title} - ${siteConfig.name}` },
+        { name: "description", content: data?.service.description },
+      ]
+    );
+
+    if (data?.service.media.at(0)) {
+      res.push({
+        property: "og:image",
+        content: data.service.media[0].url,
+      });
+    }
+  } else {
+    res.push({ title: `Добавить услугу - ${siteConfig.name}` });
+  }
+
+  return res;
+};
+
 export default function CreateServicePage() {
   const lastResult = useActionData<typeof action>();
   const { categories, service } = useLoaderData<typeof loader>();
@@ -105,7 +131,8 @@ export default function CreateServicePage() {
   });
 
   const navigation = useNavigation();
-  const isSubmitting = navigation.state !== "idle";
+  const isSubmitting =
+    navigation.formAction?.includes("/services/new") ?? false;
 
   return (
     <div className="flex flex-1 justify-center items-start">
@@ -136,6 +163,7 @@ export default function CreateServicePage() {
                   placeholder="Описание услуги..."
                   name={fields.content.name}
                   defaultValue={fields.content.initialValue}
+                  className="min-h-24"
                 />
 
                 {fields.content.errors && (

@@ -3,6 +3,7 @@ import { Media, OrderStatus, User } from "@prisma/client";
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
+  MetaFunction,
   redirect,
 } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
@@ -24,6 +25,7 @@ import { createMessage } from "~/models/chat.server";
 import { getOrder, updateOrderStatus } from "~/models/order.server";
 import { getUser, requireUserId } from "~/session.server";
 import { Chat } from "./chat";
+import { siteConfig } from "~/config/site";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUser(request);
@@ -42,6 +44,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (!order) return redirect("/orders");
 
   return { order, user };
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [{ title: `Заказ ${data?.order.id} - ${siteConfig.name}` }];
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
