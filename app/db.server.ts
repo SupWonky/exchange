@@ -34,7 +34,22 @@ prisma.$use(async (params, next) => {
     if (["findFirst", "findMany", "count"].includes(params.action)) {
       // Ensure a where clause exists
       params.args.where = {
-        deletedAt: null, // Only include records that haven't been soft-deleted
+        deletedAt: null,
+        ...params.args.where,
+      };
+    }
+  } else if (params.model === "ServiceInfo") {
+    if (params.action === "findUnique") {
+      params.action = "findFirst";
+    }
+
+    // Apply to queries that return data
+    if (["findFirst", "findMany", "count"].includes(params.action)) {
+      // Ensure a where clause exists
+      params.args.where = {
+        service: {
+          deletedAt: null,
+        },
         ...params.args.where,
       };
     }
