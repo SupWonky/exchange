@@ -44,6 +44,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const id = url.searchParams.get("id");
   const { title, categoryId, content, media } = submission.value;
 
+  let serviceId = undefined;
+
   if (id) {
     const service = await serviceManager.getServiceById(id);
 
@@ -51,7 +53,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       throw new Response("Not Found", { status: 404 });
     }
 
-    serviceManager.updateService({
+    serviceId = service.id;
+
+    await serviceManager.updateService({
       id,
       title,
       categoryId,
@@ -59,16 +63,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       media,
     });
   } else {
-    serviceManager.createService({
+    const service = await serviceManager.createService({
       title,
       categoryId,
       description: content,
       media,
       userId,
     });
+
+    serviceId = service.id;
   }
 
-  return redirect(`/services/new/step-2?id=${id}`);
+  return redirect(`/services/new/step-2?id=${serviceId}`);
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

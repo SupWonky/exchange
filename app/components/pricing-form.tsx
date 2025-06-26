@@ -45,10 +45,11 @@ import { CheckboxConform } from "./conform/checkbox";
 
 type PricingFormProps = {
   mode: "single" | "multiple";
-  defualtValue?: Array<PricingTier & { options: PricingTierOption[] }>;
+  defaultValue?: Array<PricingTier & { options: PricingTierOption[] }>;
 };
 
-export function PricingForm({ mode, defualtValue }: PricingFormProps) {
+export function PricingForm({ mode, defaultValue }: PricingFormProps) {
+  console.log(mode, defaultValue);
   const lastResult = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting =
@@ -57,10 +58,11 @@ export function PricingForm({ mode, defualtValue }: PricingFormProps) {
     mode === "single" ? ["BASIC"] : ["BASIC", "STANDARD", "BUSINESS"];
 
   const pricingVariants = useMemo(() => {
-    if (!defualtValue) {
-      return variants.map((variant) => ({
+    if (!defaultValue || defaultValue.length === 0) {
+      return variants.map((variant, index) => ({
+        id: undefined,
         variant,
-        price: 500,
+        price: (index + 1) * 500,
         duration: 1440,
         volume: "",
         description: "",
@@ -68,26 +70,32 @@ export function PricingForm({ mode, defualtValue }: PricingFormProps) {
       }));
     }
 
-    if (defualtValue.length === 1) {
-      const defVairant = defualtValue[0];
+    return variants.map((variant, index) => {
+      const existingVariant = defaultValue.find((v) => v.variant === variant);
 
-      return variants.map((variant) => {
-        if (variant === defVairant.variant) {
-          return defVairant;
-        }
+      if (existingVariant) {
         return {
-          variant,
-          price: 500,
-          duration: 1440,
-          volume: "",
-          description: "",
-          options: [],
+          id: existingVariant.id,
+          variant: existingVariant.variant,
+          price: existingVariant.price,
+          duration: existingVariant.duration,
+          volume: existingVariant.volume || "",
+          description: existingVariant.description || "",
+          options: existingVariant.options || [],
         };
-      });
-    }
+      }
 
-    return defualtValue;
-  }, [defualtValue]);
+      return {
+        id: undefined,
+        variant,
+        price: (index + 1) * 500,
+        duration: 1440,
+        volume: "",
+        description: "",
+        options: [],
+      };
+    });
+  }, [defaultValue, variants]);
 
   const [form, fields] = useForm({
     lastResult,
@@ -96,15 +104,20 @@ export function PricingForm({ mode, defualtValue }: PricingFormProps) {
     },
     defaultValue: {
       mode,
-      pricingVariants: pricingVariants.map(({ options, ...rest }) => ({
-        ...rest,
-        options: options.map((option) => ({
+      pricingVariants: pricingVariants.map((pricingVariant) => ({
+        id: pricingVariant.id,
+        variant: pricingVariant.variant,
+        price: pricingVariant.price,
+        duration: pricingVariant.duration,
+        volume: pricingVariant.volume,
+        description: pricingVariant.description,
+        options: pricingVariant.options.map((option) => ({
+          name: option.name,
+          type: option.type,
           value:
             option.type === "BOOLEAN"
               ? option.booleanValue
               : option.stringValue,
-          name: option.name,
-          type: option.type,
         })),
       })),
     },
@@ -115,8 +128,6 @@ export function PricingForm({ mode, defualtValue }: PricingFormProps) {
   return (
     <Form method="post" className="flex flex-col gap-y-4" id={form.id}>
       <input type="hidden" name="mode" value={mode} />
-
-      {/* Global dialog for adding options */}
 
       {pricingList.map((pricing, index) => {
         const pricingFields = pricing.getFieldset();
@@ -148,8 +159,7 @@ export function PricingForm({ mode, defualtValue }: PricingFormProps) {
             )}
 
             <div className="flex flex-col gap-y-4">
-              {/* Price Field */}
-
+              {/* Description Field */}
               <div className={`${mode === "single" ? "hidden" : ""}`}>
                 <Label className="text-base font-medium">
                   Короткое описание
@@ -157,7 +167,7 @@ export function PricingForm({ mode, defualtValue }: PricingFormProps) {
                 <div className="mt-1">
                   <Input
                     name={pricingFields.description.name}
-                    defaultValue={pricingFields.description.value}
+                    defaultValue={pricingFields.description.initialValue}
                     type="text"
                     placeholder="Описание..."
                     hidden={mode === "single"}
@@ -170,12 +180,17 @@ export function PricingForm({ mode, defualtValue }: PricingFormProps) {
                   )}
                 </div>
               </div>
+
+              {/* Price Field */}
               <div>
                 <Label className="text-base font-medium">Стоимость</Label>
                 <div className="mt-1">
                   <Select
                     name={pricingFields.price.name}
-                    defaultValue={((index + 1) * 500).toString()}
+                    defaultValue={
+                      pricingFields.price.initialValue?.toString() ||
+                      ((index + 1) * 500).toString()
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -205,7 +220,9 @@ export function PricingForm({ mode, defualtValue }: PricingFormProps) {
                 <div className="mt-1">
                   <Select
                     name={pricingFields.duration.name}
-                    defaultValue="1440"
+                    defaultValue={
+                      pricingFields.duration.initialValue?.toString() || "1440"
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -237,7 +254,7 @@ export function PricingForm({ mode, defualtValue }: PricingFormProps) {
                     name={pricingFields.volume.name}
                     type="text"
                     placeholder="Пример: 1 лендинг"
-                    defaultValue={pricingFields.volume.value}
+                    defaultValue={pricingFields.volume.initialValue}
                   />
                   {pricingFields.volume.errors && (
                     <div className="p-1 text-destructive text-sm">
@@ -275,23 +292,28 @@ export function PricingForm({ mode, defualtValue }: PricingFormProps) {
                                 <TableCell>
                                   <input
                                     readOnly
-                                    className="bg-transparent  outline-none"
+                                    className="bg-transparent outline-none"
                                     placeholder="Название"
                                     name={optionFields.name.name}
-                                    defaultValue={optionFields.name.value || ""}
+                                    defaultValue={
+                                      optionFields.name.initialValue || ""
+                                    }
                                   />
                                   <input
                                     type="hidden"
                                     name={optionFields.type.name}
-                                    value={optionFields.type.value || "BOOLEAN"}
+                                    value={
+                                      optionFields.type.initialValue ||
+                                      "BOOLEAN"
+                                    }
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  {optionFields.type.value === "BOOLEAN" ? (
+                                  {(optionFields.type.initialValue ||
+                                    "BOOLEAN") === "BOOLEAN" ? (
                                     <div className="flex items-center justify-start">
                                       <CheckboxConform
                                         meta={optionFields.value}
-                                        // defaultChecked={optionFields.value.initialValue}
                                         className="h-5 w-5"
                                       />
                                     </div>
@@ -299,7 +321,7 @@ export function PricingForm({ mode, defualtValue }: PricingFormProps) {
                                     <Input
                                       name={optionFields.value.name}
                                       defaultValue={
-                                        optionFields.value.value || ""
+                                        optionFields.value.initialValue || ""
                                       }
                                       placeholder="Пример: трудная (сложность)"
                                     />
@@ -339,6 +361,7 @@ export function PricingForm({ mode, defualtValue }: PricingFormProps) {
                                 defaultValue: {
                                   type: value.type,
                                   name: value.name,
+                                  value: value.type === "BOOLEAN" ? false : "",
                                 },
                               })
                             }
@@ -370,6 +393,15 @@ function OptionDialog({ onAdd }: OptionDialogProps) {
   const [type, setType] = useState<"BOOLEAN" | "STRING">("BOOLEAN");
   const [name, setName] = useState("");
 
+  const handleAdd = () => {
+    if (name.trim()) {
+      onAdd?.({ name: name.trim(), type });
+      setOpen(false);
+      setName("");
+      setType("BOOLEAN");
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
@@ -396,7 +428,6 @@ function OptionDialog({ onAdd }: OptionDialogProps) {
             <div className="space-y-4">
               <Field>
                 <Label className="text-base font-medium">Название опции</Label>
-
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -407,7 +438,6 @@ function OptionDialog({ onAdd }: OptionDialogProps) {
                 <Label className="text-base font-medium">
                   Вид отображения опции
                 </Label>
-
                 <RadioGroup
                   value={type}
                   onValueChange={(value) =>
@@ -427,12 +457,10 @@ function OptionDialog({ onAdd }: OptionDialogProps) {
               </Field>
 
               <Button
-                onClick={() => {
-                  onAdd?.({ name, type });
-                  setOpen(false);
-                }}
+                onClick={handleAdd}
                 className="w-full"
                 type="button"
+                disabled={!name.trim()}
               >
                 Сохранить
               </Button>

@@ -23,11 +23,7 @@ import { siteConfig } from "~/config/site";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
-
-  console.log(formData);
   const submission = parseWithZod(formData, { schema: PricingSchema });
-
-  //console.log(submission.reply());
 
   if (submission.status !== "success") {
     return submission.reply();
@@ -46,8 +42,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const { pricingVariants, mode } = submission.value;
-
-  console.log(pricingVariants[0].options);
 
   if (mode === "single" && pricingVariants.length !== 1) {
     return submission.reply({
@@ -175,7 +169,7 @@ export default function CreateServicePageSetp2() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <PricingForm key={mode} mode={mode} defualtValue={pricings} />
+            <PricingForm key={mode} mode={mode} defaultValue={pricings} />
           </CardContent>
         </Card>
       </div>
